@@ -169,3 +169,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+# HAM 10000
+HAM10000/
+
+# MAC (manel :( )
+.DS_Store
