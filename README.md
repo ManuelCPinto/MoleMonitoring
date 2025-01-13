@@ -35,6 +35,13 @@ The HAM10000 dataset includes the following seven classes of skin lesions, categ
 - **João Pedro Silveira** - [GitHub: Joao-Pedro-Silveira](https://github.com/Joao-Pedro-Silveira)  
 
 ---
+## Libraries
+
+This project uses **TensorFlow** for image processing and model training. Ensure you have TensorFlow installed in your environment before running the project. You can install TensorFlow using pip:
+
+```bash
+pip install tensorflow
+```
 
 ## Dataset Preparation
 
@@ -45,14 +52,21 @@ Follow these steps to download and prepare the HAM10000 dataset for this project
 2. Download the file named **`dataverse_files.zip`**.
 3. Place the downloaded file in the root directory of the project.
 
-### 2. Run the Preprocessing Script
-1. Run the following command on the project directory:
+### 2. Run the Preprocessing Scripts
+1. Run the following commands on the project directory:
    ```bash
    python zipMerge.py
+   python resizeImages.py
 
 ### 3. Output Structure
-1. After running the script, the dataset will be organized in a new folder named HAM10000:
    ```bash
-   HAM10000/
-   ├── HAM10000_images/    # All consolidated images
-   ├── HAM10000_metadata   # Metadata file
+    MoleMonitoring/
+    ├── HAM10000/
+    │   ├── HAM10000_images/            # Original images
+    │   ├── HAM10000_images_processed/  # Resized images (256x256)
+    │   ├── HAM10000_metadata           # Metadata file
+    ├── preprocessing/
+    │   ├── resizeImages.py             # Resizing script
+    │   ├── zipMerge.py                 # Merging script
+    ├── .gitignore
+    ├── README.md
