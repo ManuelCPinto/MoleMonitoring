@@ -2,11 +2,11 @@ import os
 import zipfile
 import shutil
 
-base_path = os.path.dirname(os.path.abspath(__file__))
-zip_file = os.path.join(base_path, "dataverse_files.zip")
-output_folder = os.path.join(base_path, "dataverse_files")
-ham_folder = os.path.join(base_path, "HAM10000")
-images_folder = os.path.join(ham_folder, "HAM10000_images")
+base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..")) 
+zip_file = os.path.join(base_path, "dataverse_files.zip") 
+output_folder = os.path.join(base_path, "dataverse_files") 
+ham_folder = os.path.join(base_path, "HAM10000") 
+images_folder = os.path.join(ham_folder, "HAM10000_images") 
 
 print("Extracting dataverse_files.zip...")
 with zipfile.ZipFile(zip_file, 'r') as zip_ref:
@@ -28,6 +28,7 @@ extract_images(ham_zip_2, images_folder)
 metadata_file = os.path.join(output_folder, "HAM10000_metadata")
 if os.path.exists(metadata_file):
     shutil.move(metadata_file, os.path.join(ham_folder, "HAM10000_metadata"))
+    print(f"Moved metadata file to: {ham_folder}")
 
 print("Removing unnecessary files and folders...")
 if os.path.exists(output_folder):
