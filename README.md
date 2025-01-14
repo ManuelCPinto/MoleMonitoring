@@ -60,19 +60,20 @@ Follow these steps to download and prepare the HAM10000 dataset for this project
 
 ### 3. Output Structure
    ```bash
-    MoleMonitoring/
+   MoleMonitoring/
     ├── HAM10000/
-    │   ├── HAM10000_images/            # Original images from the dataset
-    │   ├── HAM10000_images_processed/  # Resized images (256x256) created by `resizeImages.py`
-    │   ├── HAM10000_metadata           # Updated metadata file with the `benign_malignant` column
-    ├── plots/                          # Folder to store generated plots
-    │   ├── class_distribution.png
-    │   ├── benign_vs_malignant.png
+    │   ├── HAM10000_images/            # Resized images (256x256, unnormalized)
+    │   ├── HAM10000_images_processed/  # Processed images (normalized)
+    │   │   ├── rgb/                    # Resized + normalized RGB images (256x256, [0, 1])
+    │   │   ├── grayscale/              # Resized + normalized grayscale images (256x256, [0, 1])
+    │   ├── HAM10000_metadata          
+    ├── plots/                        
     ├── preprocessing/                 
-    │   ├── resize_images.py            # Script to resize images and store them in `HAM10000_images_processed`
-    │   ├── zip_merge.py                # Script to merge and organize dataset files
-    │   ├── update_metadata.py          # Script to update metadata with benign/malignant class
-    │   ├── generate_plots.py           # Script to create and save plots
-    ├── .gitignore                      
-    ├── README.md                      
+    │   ├── resizeImages.py             # Script for resizing and normalizing images
+    │   ├── zipMerge.py                 # Script for organizing dataset files
+    │   ├── update_metadata.py          # Script to add benign/malignant column to metadata
+    │   ├── generate_plots.py           # Script to create dataset visualization plots
+    ├── .gitignore                     
+    ├── README.md                     
+                    
 
