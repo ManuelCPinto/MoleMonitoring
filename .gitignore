@@ -173,6 +173,7 @@ cython_debug/
 
 # HAM 10000
 HAM10000/
+plots/
 
-# MAC (manel :( )
+# MAC (manel)
 .DS_Store
