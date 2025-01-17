@@ -14,7 +14,7 @@ metadata["benign_malignant"] = metadata["dx"].apply(
 )
 
 # Removed unecessary colums
-metadata = metadata.drop(["image_id", "dataset"], axis=1)
+metadata = metadata.drop(["dataset"], axis=1)
 
 metadata.to_csv(metadata_file, index=False)
 print(f"Metadata updated and saved to: {metadata_file}")
