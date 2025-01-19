@@ -16,12 +16,17 @@ class_counts = metadata["dx"].value_counts().sort_values(ascending=False)
 x_labels = [f"{cls} ({metadata.loc[metadata['dx'] == cls, 'benign_malignant'].iloc[0][0]})" for cls in class_counts.index]
 
 plt.figure(figsize=(10, 6))
-plt.bar(x_labels, class_counts.values, color="skyblue")
+bars = plt.bar(x_labels, class_counts.values, color="skyblue")
 plt.title("Class Distribution", fontsize=16)
 plt.xlabel("Class", fontsize=14)
 plt.ylabel("Number of Images", fontsize=14)
 plt.xticks(rotation=45)
 plt.grid(axis="y", linestyle="--", alpha=0.7)
+
+# Add labels using bar_label
+ax = plt.gca()  # Get the current Axes
+ax.bar_label(bars, fmt='%d', padding=3)
+
 plt.tight_layout()
 class_distribution_file = os.path.join(plots_folder, "class_distribution_histogram_ordered.png")
 plt.savefig(class_distribution_file)
@@ -32,12 +37,17 @@ plt.show()
 benign_malignant_counts = metadata["benign_malignant"].value_counts()
 
 plt.figure(figsize=(6, 6))
-benign_malignant_counts.plot(kind="bar", color=["green", "red"])
+benign_malignant_counts.plot(kind="bar", color="skyblue")
 plt.title("Benign vs Malignant Cases", fontsize=16)
 plt.xlabel("Category", fontsize=14)
 plt.ylabel("Number of Images", fontsize=14)
 plt.xticks(rotation=0)
 plt.grid(axis="y", linestyle="--", alpha=0.7)
+
+#add values to bars
+ax = plt.gca()  # Get the current Axes
+ax.bar_label(ax.containers[0], fmt='%d', padding=3)
+
 plt.tight_layout()
 benign_malignant_file = os.path.join(plots_folder, "benign_vs_malignant.png")
 plt.savefig(benign_malignant_file)
