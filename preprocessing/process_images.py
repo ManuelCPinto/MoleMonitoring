@@ -1,5 +1,10 @@
 import os
 import tensorflow as tf
+import cv2
+import numpy as np
+import pandas as pd
+from skimage.metrics import peak_signal_noise_ratio as psnr
+from skimage.metrics import structural_similarity as ssim
 
 base_folder = "../HAM10000"
 images_folder = os.path.join(base_folder, "HAM10000_images")
@@ -9,52 +14,62 @@ target_size = (256, 256)
 
 os.makedirs(processed_folder, exist_ok=True)
 
-def resize_images(input_folder, target_size):
-    print("Resizing images in HAM10000_images folder...")
-    for img_file in os.listdir(input_folder):
-        img_path = os.path.join(input_folder, img_file)
-        
-        if img_file.lower().endswith(('.png', '.jpg', '.jpeg')):
-            img = tf.io.read_file(img_path)
-            img = tf.image.decode_image(img, channels=3)
-            resized_img = tf.image.resize(img, target_size)
-            resized_img = tf.cast(resized_img, tf.uint8)
-            tf.keras.preprocessing.image.save_img(img_path, resized_img)
+def remove_hair(img):
+    gray_scale = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 9))
+    blackhat = cv2.morphologyEx(gray_scale, cv2.MORPH_BLACKHAT, kernel)
+    bhg = cv2.GaussianBlur(blackhat, (3, 3), cv2.BORDER_DEFAULT)
+    _, mask = cv2.threshold(bhg, 10, 255, cv2.THRESH_BINARY)
+    dst = cv2.inpaint(img, mask, inpaintRadius=6, flags=cv2.INPAINT_TELEA)
+    return dst, mask
 
-    print("All images resized to 256x256 and overwritten in 'HAM10000_images'.")
+def calculate_metrics(original, processed):
+    original = cv2.cvtColor(original, cv2.COLOR_BGR2GRAY)
+    processed = cv2.cvtColor(processed, cv2.COLOR_BGR2GRAY)
+    psnr_value = psnr(original, processed, data_range=255)
+    ssim_value = ssim(original, processed, data_range=255)
     
-def normalize_images(input_folder, output_folder, target_size):
-    print("Normalizing images and saving to HAM10000_images_processed folder...")
+    return psnr_value, ssim_value
+
+def process_images(input_folder, output_folder, target_size):
+    print("Processing images, removing hair, and saving to HAM10000_images_processed folder...")
     
     rgb_folder = os.path.join(output_folder, "rgb")
     grayscale_folder = os.path.join(output_folder, "grayscale")
+    metrics_folder = os.path.join(output_folder, "metrics")
     
     os.makedirs(rgb_folder, exist_ok=True)
     os.makedirs(grayscale_folder, exist_ok=True)
+    os.makedirs(metrics_folder, exist_ok=True)
     
+    metrics = []
+
     for img_file in os.listdir(input_folder):
         img_path = os.path.join(input_folder, img_file)
         
         if img_file.lower().endswith(('.png', '.jpg', '.jpeg')):
-            img = tf.io.read_file(img_path)
-            img = tf.image.decode_image(img, channels=3)
+            img = cv2.imread(img_path)
 
-            resized_img = tf.image.resize(img, target_size)
+            clean_img, mask = remove_hair(img)
 
-            normalized_rgb = resized_img / 255.0
-
-            grayscale_img = tf.image.rgb_to_grayscale(resized_img)
-            normalized_grayscale = grayscale_img / 255.0
+            resized_clean = tf.image.resize(clean_img, target_size)
+            resized_clean = tf.cast(resized_clean, tf.uint8).numpy()
 
             rgb_output_path = os.path.join(rgb_folder, img_file)
-            tf.keras.preprocessing.image.save_img(rgb_output_path, normalized_rgb)
+            cv2.imwrite(rgb_output_path, resized_clean)
 
+            grayscale_img = cv2.cvtColor(resized_clean, cv2.COLOR_RGB2GRAY)
             grayscale_output_path = os.path.join(grayscale_folder, img_file)
-            tf.keras.preprocessing.image.save_img(grayscale_output_path, normalized_grayscale)
+            cv2.imwrite(grayscale_output_path, grayscale_img)
 
-    print("All images normalized (RGB and grayscale) and saved to 'HAM10000_images_processed'.")
+            psnr_value, ssim_value = calculate_metrics(img, resized_clean)
+            metrics.append({"image": img_file, "PSNR": psnr_value, "SSIM": ssim_value})
+
+    metrics_df = pd.DataFrame(metrics)
+    metrics_csv_path = os.path.join(metrics_folder, "hair_removal_metrics.csv")
+    metrics_df.to_csv(metrics_csv_path, index=False)
+    print("All images processed and saved to 'HAM10000_images_processed'.")
+    print(f"Metrics saved to {metrics_csv_path}")
 
 
-resize_images(images_folder, target_size)
-
-normalize_images(images_folder, processed_folder, target_size)
+process_images(images_folder, processed_folder, target_size)
