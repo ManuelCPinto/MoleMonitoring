@@ -163,6 +163,45 @@ def plot_benign_malignant_by_dx(metadata, plots_folder):
     plt.savefig(os.path.join(plots_folder, "benign_malignant_by_dx.png"))
     plt.show()
 
+def plot_psnr_histogram(metrics, plots_folder):
+    psnr_bins = [0, 29, 39, float('inf')]
+    psnr_labels = ['0-29 (Bad)', '30-39 (Ok)', '40+ (Good)']
+    metrics['PSNR_Category'] = pd.cut(metrics['PSNR'], bins=psnr_bins, labels=psnr_labels, right=True)
+
+    psnr_counts = metrics['PSNR_Category'].value_counts().sort_index()
+
+    plt.figure(figsize=(8, 6))
+    sns.barplot(x=psnr_counts.index, y=psnr_counts.values, palette='Blues_d', alpha=0.8)
+    plt.title("Image Count by PSNR Range", fontsize=16)
+    plt.xlabel("PSNR Range", fontsize=14)
+    plt.ylabel("Number of Images", fontsize=14)
+
+    for i, value in enumerate(psnr_counts.values):
+        plt.text(i, value + 1, str(value), ha='center', fontsize=12, color='black')
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(plots_folder, "psnr_histogram.png"))
+    plt.show()
+
+def plot_ssim_histogram(metrics, plots_folder):
+    ssim_bins = [0, 0.7, 0.9, 1.0]
+    ssim_labels = ['0-0.7 (Bad)', '0.7-0.9 (Ok)', '0.9-1.0 (Good)']
+    metrics['SSIM_Category'] = pd.cut(metrics['SSIM'], bins=ssim_bins, labels=ssim_labels, right=True)
+
+    ssim_counts = metrics['SSIM_Category'].value_counts().sort_index()
+
+    plt.figure(figsize=(8, 6))
+    sns.barplot(x=ssim_counts.index, y=ssim_counts.values, palette='Greens_d', alpha=0.8)
+    plt.title("Image Count by SSIM Range", fontsize=16)
+    plt.xlabel("SSIM Range", fontsize=14)
+    plt.ylabel("Number of Images", fontsize=14)
+
+    for i, value in enumerate(ssim_counts.values):
+        plt.text(i, value + 1, str(value), ha='center', fontsize=12, color='black')
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(plots_folder, "ssim_histogram.png"))
+    plt.show()
 
 root_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -170,6 +209,7 @@ plots_folder = os.path.join(root_folder, "plots")
 os.makedirs(plots_folder, exist_ok=True)
 
 metadata = pd.read_csv( os.path.join(root_folder, "HAM10000", "HAM10000_metadata"))
+metrics = pd.read_csv(os.path.join(root_folder, "HAM10000", "HAM10000_images_processed", "metrics", "hair_removal_metrics.csv"))
 
 plot_class_distribution(metadata, plots_folder)
 plot_benign_vs_malignant(metadata, plots_folder)
@@ -181,3 +221,6 @@ plot_localization_distribution(metadata, plots_folder)
 plot_gender_by_dx(metadata, plots_folder)
 plot_localization_by_dx(metadata, plots_folder)
 plot_benign_malignant_by_dx(metadata, plots_folder)
+plot_psnr_histogram(metrics, plots_folder)
+plot_ssim_histogram(metrics, plots_folder)
+
