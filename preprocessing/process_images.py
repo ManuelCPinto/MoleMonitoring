@@ -50,10 +50,10 @@ def process_images(input_folder, output_folder, target_size):
         if img_file.lower().endswith(('.png', '.jpg', '.jpeg')):
             img = cv2.imread(img_path)
 
-            clean_img, mask = remove_hair(img)
-
-            resized_clean = tf.image.resize(clean_img, target_size)
-            resized_clean = tf.cast(resized_clean, tf.uint8).numpy()
+            resized = tf.image.resize(img, target_size)
+            resized = tf.cast(resized, tf.uint8).numpy()
+            
+            resized_clean, mask = remove_hair(resized)
 
             rgb_output_path = os.path.join(rgb_folder, img_file)
             cv2.imwrite(rgb_output_path, resized_clean)
@@ -62,7 +62,7 @@ def process_images(input_folder, output_folder, target_size):
             grayscale_output_path = os.path.join(grayscale_folder, img_file)
             cv2.imwrite(grayscale_output_path, grayscale_img)
 
-            psnr_value, ssim_value = calculate_metrics(img, resized_clean)
+            psnr_value, ssim_value = calculate_metrics(resized, resized_clean)
             metrics.append({"image": img_file, "PSNR": psnr_value, "SSIM": ssim_value})
 
     metrics_df = pd.DataFrame(metrics)
