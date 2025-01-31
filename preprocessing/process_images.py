@@ -8,11 +8,15 @@ from skimage.metrics import structural_similarity as ssim
 
 base_folder = "../HAM10000"
 images_folder = os.path.join(base_folder, "HAM10000_images")
-processed_folder = os.path.join(base_folder, "HAM10000_images_processed") 
+segmentations_folder = os.path.join(base_folder, "HAM10000_segmentations")
+
+processed_images_folder = os.path.join(base_folder, "HAM10000_images_processed")
+processed_segmentations_folder = os.path.join(base_folder, "HAM10000_segmentations_processed")
 
 target_size = (256, 256)
 
-os.makedirs(processed_folder, exist_ok=True)
+os.makedirs(processed_images_folder, exist_ok=True)
+os.makedirs(processed_segmentations_folder, exist_ok=True)
 
 def remove_hair(img):
     gray_scale = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -71,5 +75,23 @@ def process_images(input_folder, output_folder, target_size):
     print("All images processed and saved to 'HAM10000_images_processed'.")
     print(f"Metrics saved to {metrics_csv_path}")
 
+def process_segmentations(input_folder, output_folder, target_size):
+    print("Processing segmentation masks and resizing them to 256x256...")
+    
+    os.makedirs(output_folder, exist_ok=True)
 
-process_images(images_folder, processed_folder, target_size)
+    for seg_file in os.listdir(input_folder):
+        seg_path = os.path.join(input_folder, seg_file)
+
+        if seg_file.lower().endswith('.png'): 
+            seg = cv2.imread(seg_path, cv2.IMREAD_GRAYSCALE)
+            resized_seg = tf.image.resize(seg[..., np.newaxis], target_size)
+            resized_seg = tf.cast(resized_seg, tf.uint8).numpy().squeeze()
+
+            output_path = os.path.join(output_folder, seg_file)
+            cv2.imwrite(output_path, resized_seg)
+
+    print(f"All segmentation masks processed and saved to '{output_folder}'.")
+
+process_images(images_folder, processed_images_folder, target_size)
+process_segmentations(segmentations_folder, processed_segmentations_folder, target_size)
