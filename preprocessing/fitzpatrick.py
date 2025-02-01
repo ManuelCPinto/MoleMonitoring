@@ -1,89 +1,114 @@
 import os
-import cv2
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import stone
 
-base_folder = "../HAM10000"
-images_folder = os.path.join(base_folder, "HAM10000_images_processed", "rgb")
-segmentations_folder = os.path.join(base_folder, "HAM10000_segmentations_processed")
-metadata_file = os.path.join(base_folder, "HAM10000_metadata")
-plots_folder = os.path.join(base_folder, "plots")
+BASE_FOLDER = "../HAM10000"
+IMAGES_FOLDER = os.path.join(BASE_FOLDER, "HAM10000_images_processed", "rgb")
+METADATA_FILE = os.path.join(BASE_FOLDER, "HAM10000_metadata")
+DEBUG_FOLDER = os.path.join(BASE_FOLDER, "debug_fitzpatrick")
 
-os.makedirs(plots_folder, exist_ok=True)
+os.makedirs(DEBUG_FOLDER, exist_ok=True)
 
-metadata = pd.read_csv(metadata_file)
+metadata = pd.read_csv(METADATA_FILE)
 
-def extract_skin_tone(image_path, mask_path, image_id):
-    img = cv2.imread(image_path)
-    mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE) 
+FITZPATRICK_MAP = {
+    "I": "I (Very Fair)",
+    "II": "II (Fair)",
+    "III": "III (Medium)",
+    "IV": "IV (Olive)",
+    "V": "V (Brown)",
+    "VI": "VI (Dark Brown/Black)"
+}
 
-    _, binary_mask = cv2.threshold(mask, 128, 255, cv2.THRESH_BINARY)
+debug_log_path = os.path.join(DEBUG_FOLDER, "fitzpatrick_debug_log.txt")
+misclassified_csv = os.path.join(DEBUG_FOLDER, "misclassified_images.csv")
 
-    skin_mask = cv2.bitwise_not(binary_mask)
+with open(debug_log_path, "w") as log_file:
+    log_file.write("Fitzpatrick Debug Log\n========================\n")
 
-    skin_pixels = img[skin_mask == 255]
+misclassified_images = []
 
-    avg_skin_color = np.mean(skin_pixels, axis=0).astype(int)
-    save_visualization(img, mask, skin_mask, image_id)
+def classify_fitzpatrick(hex_color):
+    """ Convert hex skin tone to Fitzpatrick scale based on RGB intensity. """
+    if not hex_color:
+        return "Unknown"
 
-    return avg_skin_color
+    hex_color = hex_color.lstrip("#")
+    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    intensity = (r + g + b) / 3
 
-def classify_fitzpatrick(rgb_values):
-    r, g, b = rgb_values
-    intensity = (r + g + b) / 3 
-
-    if intensity > 220:
+    if intensity > 240:
         return "I (Very Fair)"
-    elif intensity > 200:
+    elif intensity > 210:
         return "II (Fair)"
-    elif intensity > 180:
+    elif intensity > 190:
         return "III (Medium)"
-    elif intensity > 160:
+    elif intensity > 170:
         return "IV (Olive)"
-    elif intensity > 120:
+    elif intensity > 140:
         return "V (Brown)"
     else:
         return "VI (Dark Brown/Black)"
 
-def save_visualization(img, mask, skin_mask, image_id):
-    fig, axes = plt.subplots(1, 4, figsize=(12, 4))
+def analyze_skin_tone(image_path, image_id):
+    try:
+        result = stone.process(image_path, image_type="color", return_report_image=True)
 
-    axes[0].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    axes[0].set_title("Original Image")
+        if "faces" not in result or not result["faces"]:
+            return None, None, None
 
-    axes[1].imshow(mask, cmap="gray")
-    axes[1].set_title("Segmentation Mask")
+        tone_label = result["faces"][0].get("tone_label", "Unknown")
+        skin_hex = result["faces"][0].get("skin_tone", None)
 
-    axes[2].imshow(skin_mask, cmap="gray")
-    axes[2].set_title("Inverted Mask (Skin Area)")
+        fitzpatrick_type = classify_fitzpatrick(skin_hex)
 
-    img_skin_only = cv2.bitwise_and(img, img, mask=skin_mask)
-    axes[3].imshow(cv2.cvtColor(img_skin_only, cv2.COLOR_BGR2RGB))
-    axes[3].set_title("Extracted Skin Region")
+        with open(debug_log_path, "a") as log_file:
+            log_file.write(f"{image_id}: Hex={skin_hex}, Intensity={fitzpatrick_type}, Stone_Label={tone_label}\n")
 
-    for ax in axes:
-        ax.axis("off")
+        report_images = result.get("report_images", None)
+        if report_images:
+            first_image = list(report_images.values())[0] 
+            plt.imsave(os.path.join(DEBUG_FOLDER, f"{image_id}_report.png"), first_image)
 
-    plt.tight_layout()
-    plt.savefig(os.path.join(plots_folder, f"{image_id}_processing.png"))
-    plt.close()
+        return fitzpatrick_type, skin_hex, tone_label
 
-fitzpatrick_column = []
-print("Classifying images into Fitzpatrick skin types...")
+    except Exception as e:
+        with open(debug_log_path, "a") as log_file:
+            log_file.write(f"{image_id}: ERROR - {e}\n")
+        return None, None, None
+
+fitzpatrick_column, skin_color_column, stone_labels = [], [], []
+print("🔄 Processing images... This may take a while.")
 
 for idx, row in metadata.iterrows():
     image_id = row["image_id"]
-    img_file = os.path.join(images_folder, image_id + ".jpg")
+    img_file = os.path.join(IMAGES_FOLDER, image_id + ".jpg")
 
-    mask_file = os.path.join(segmentations_folder, image_id + "_segmentation.png")
+    if os.path.exists(img_file):
+        fitzpatrick_type, skin_hex, stone_label = analyze_skin_tone(img_file, image_id)
 
-    skin_rgb = extract_skin_tone(img_file, mask_file, image_id)
-    fitzpatrick_type = classify_fitzpatrick(skin_rgb)
-    fitzpatrick_column.append(fitzpatrick_type)
-    
+        if fitzpatrick_type in ["VI (Dark Brown/Black)"] and skin_hex:
+            misclassified_images.append({"image_id": image_id, "hex": skin_hex, "fitzpatrick": fitzpatrick_type, "stone_label": stone_label})
+
+        fitzpatrick_column.append(fitzpatrick_type)
+        skin_color_column.append(skin_hex)
+        stone_labels.append(stone_label)
+    else:
+        fitzpatrick_column.append("Missing Image")
+        skin_color_column.append(None)
+        stone_labels.append(None)
+
 metadata["fitzpatrick_scale"] = fitzpatrick_column
+metadata["skin_tone_hex"] = skin_color_column
+metadata["stone_label"] = stone_labels
+metadata.to_csv(METADATA_FILE, index=False)
 
-metadata.to_csv(metadata_file, index=False)
-print(f"Updated metadata saved with Fitzpatrick scale to: {metadata_file}")
-print(f"Processing steps saved in {plots_folder}")
+if misclassified_images:
+    pd.DataFrame(misclassified_images).to_csv(misclassified_csv, index=False)
+
+print("\n✅ Processing Complete!")
+print(f"🔹 Updated metadata saved: {METADATA_FILE}")
+print(f"🔹 Debug log saved: {debug_log_path}")
+if misclassified_images:
+    print(f"🔹 Misclassified images log: {misclassified_csv}")

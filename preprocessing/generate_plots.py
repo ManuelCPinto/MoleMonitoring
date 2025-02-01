@@ -203,6 +203,26 @@ def plot_ssim_histogram(metrics, plots_folder):
     plt.savefig(os.path.join(plots_folder, "ssim_histogram.png"))
     plt.show()
 
+def plot_fitzpatrick_histogram(metadata_file, plots_folder):
+    fitzpatrick_counts = metadata["fitzpatrick_scale"].value_counts().sort_index()
+
+    plt.figure(figsize=(8, 6))
+    sns.barplot(x=fitzpatrick_counts.index, y=fitzpatrick_counts.values, palette="viridis", alpha=0.8)
+    plt.title("Distribution of Fitzpatrick Skin Types", fontsize=16)
+    plt.xlabel("Fitzpatrick Scale", fontsize=14)
+    plt.ylabel("Number of Images", fontsize=14)
+
+    for i, value in enumerate(fitzpatrick_counts.values):
+        plt.text(i, value + 1, str(value), ha='center', fontsize=12, color='black')
+
+    plt.tight_layout()
+    os.makedirs(plots_folder, exist_ok=True)
+    plot_path = os.path.join(plots_folder, "fitzpatrick_histogram.png")
+    plt.savefig(plot_path)
+    plt.show()
+
+
+
 root_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 plots_folder = os.path.join(root_folder, "plots")
@@ -211,6 +231,7 @@ os.makedirs(plots_folder, exist_ok=True)
 metadata = pd.read_csv( os.path.join(root_folder, "HAM10000", "HAM10000_metadata"))
 metrics = pd.read_csv(os.path.join(root_folder, "HAM10000", "HAM10000_images_processed", "metrics", "hair_removal_metrics.csv"))
 
+'''
 plot_class_distribution(metadata, plots_folder)
 plot_benign_vs_malignant(metadata, plots_folder)
 plot_age_distribution_by_type(metadata, plots_folder)
@@ -223,4 +244,6 @@ plot_localization_by_dx(metadata, plots_folder)
 plot_benign_malignant_by_dx(metadata, plots_folder)
 plot_psnr_histogram(metrics, plots_folder)
 plot_ssim_histogram(metrics, plots_folder)
+'''
+plot_fitzpatrick_histogram(metadata, plots_folder)
 

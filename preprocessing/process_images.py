@@ -74,9 +74,6 @@ def process_images(input_folder, output_folder, target_size):
     metrics_df.to_csv(metrics_csv_path, index=False)
     print("All images processed and saved to 'HAM10000_images_processed'.")
     print(f"Metrics saved to {metrics_csv_path}")
-
-def process_segmentations(input_folder, output_folder, target_size):
-    print("Processing segmentation masks and resizing them to 256x256...")
     
     os.makedirs(output_folder, exist_ok=True)
 
@@ -94,4 +91,3 @@ def process_segmentations(input_folder, output_folder, target_size):
     print(f"All segmentation masks processed and saved to '{output_folder}'.")
 
 process_images(images_folder, processed_images_folder, target_size)
-process_segmentations(segmentations_folder, processed_segmentations_folder, target_size)
