@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision import transforms
 import pandas as pd
@@ -14,19 +14,25 @@ BASE_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "HAM
 IMAGES_FOLDER = os.path.join(BASE_FOLDER, "HAM10000_images_processed", "rgb")
 METADATA_FILE = os.path.join(BASE_FOLDER, "HAM10000_metadata")
 
-NUM_SAMPLES = 1000  
+TEST_FOLDER = os.path.join(BASE_FOLDER, "ISIC2018_Task3_Test_Images_processed", "rgb")
+TEST_METADATA = os.path.join(BASE_FOLDER, "ISIC2018_TestSet", "ISIC2018_Task3_Test_GroundTruth.csv")
+
+NUM_SAMPLES = 10000
 TRAIN_SPLIT = 0.8  
-NUM_EPOCHS = 20
-BATCH_SIZE = 8
+NUM_EPOCHS = 50
+BATCH_SIZE = 64
 NUM_CLASSES = None
 
 metadata = pd.read_csv(METADATA_FILE)
+test_metadata = pd.read_csv(TEST_METADATA)
 
 if NUM_SAMPLES < len(metadata):
     metadata = metadata.sample(n=NUM_SAMPLES, random_state=42).reset_index(drop=True)
 
 lesion_classes = {name: idx for idx, name in enumerate(metadata["dx"].unique())}
 metadata["label"] = metadata["dx"].map(lesion_classes)
+test_metadata["label"] = test_metadata["dx"].map(lesion_classes)
+
 NUM_CLASSES = len(lesion_classes)
 
 class SkinLesionDataset(Dataset):
@@ -42,7 +48,11 @@ class SkinLesionDataset(Dataset):
         row = self.metadata.iloc[idx]
         img_path = os.path.join(self.images_folder, row["image_id"] + ".jpg")
         label = row["label"]
-
+        
+        if not os.path.exists(img_path):
+            print(f"Warning: {img_path} not found. Skipping...")
+            return self.__getitem__((idx + 1) % len(self.metadata))
+    
         image = Image.open(img_path).convert("RGB")
 
         if self.transform:
@@ -58,13 +68,21 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
+test_transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+])
+
 full_dataset = SkinLesionDataset(metadata, IMAGES_FOLDER, transform=transform)
 
+test_dataset = SkinLesionDataset(test_metadata, TEST_FOLDER, transform=test_transform)
+
 train_size = int(TRAIN_SPLIT * len(full_dataset))
-test_size = len(full_dataset) - train_size
-train_dataset, test_dataset = random_split(full_dataset, [train_size, test_size])
+val_size = len(full_dataset) - train_size
+train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
 
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
 class SkinLesionCNN(nn.Module):
@@ -98,75 +116,102 @@ model = SkinLesionCNN(num_classes=NUM_CLASSES).to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-train_losses, test_losses, test_accuracies = [], [], []
+def train_model(model, train_loader, val_loader, criterion, optimizer, epochs=10):
+    train_losses, val_losses = [], []
+    train_accuracies, val_accuracies = [], []
+    
+    for epoch in range(epochs):
+        model.train()
+        train_loss, correct, total = 0.0, 0, 0
 
-for epoch in range(NUM_EPOCHS):
-    model.train()
-    running_loss = 0.0
-
-    for images, labels in train_loader:
-        images, labels = images.to(device), labels.to(device)
-
-        optimizer.zero_grad()
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item()
-
-    train_losses.append(running_loss / len(train_loader))
-
-    model.eval()
-    correct, total, test_loss = 0, 0, 0.0
-    y_true, y_pred = [], []
-
-    with torch.no_grad():
-        for images, labels in test_loader:
+        for images, labels in train_loader:
             images, labels = images.to(device), labels.to(device)
-
+            optimizer.zero_grad()
             outputs = model(images)
             loss = criterion(outputs, labels)
-            test_loss += loss.item()
-
+            loss.backward()
+            optimizer.step()
+            
+            train_loss += loss.item() * images.size(0)
             _, predicted = torch.max(outputs, 1)
             correct += (predicted == labels).sum().item()
             total += labels.size(0)
+        
+        train_acc = correct / total
+        val_loss, val_acc = evaluate_runtime(model, val_loader, criterion)
+        
+        train_losses.append(train_loss / len(train_loader.dataset))
+        val_losses.append(val_loss)
+        train_accuracies.append(train_acc)
+        val_accuracies.append(val_acc)
+        
+        print(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss/len(train_loader.dataset):.4f}, Train Acc: {train_acc:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
+    
+    # Plot training and validation loss
+    plt.figure(figsize=(12, 5))
+    plt.subplot(1, 2, 1)
+    plt.plot(range(1, epochs+1), train_losses, label='Train Loss')
+    plt.plot(range(1, epochs+1), val_losses, label='Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('Loss Evolution')
+    plt.legend()
+    
+    # Plot training and validation accuracy
+    plt.subplot(1, 2, 2)
+    plt.plot(range(1, epochs+1), train_accuracies, label='Train Accuracy')
+    plt.plot(range(1, epochs+1), val_accuracies, label='Validation Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.title('Accuracy Evolution')
+    plt.legend()
+    
+    plt.show()
 
+def evaluate_runtime(model, loader, criterion):
+    model.eval()
+    loss, correct, total = 0.0, 0, 0
+    y_true, y_pred = [], []
+    
+    with torch.no_grad():
+        for images, labels in loader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            loss += criterion(outputs, labels).item() * images.size(0)
+            _, predicted = torch.max(outputs, 1)
+            correct += (predicted == labels).sum().item()
+            total += labels.size(0)
             y_true.extend(labels.cpu().numpy())
             y_pred.extend(predicted.cpu().numpy())
-
-    test_losses.append(test_loss / len(test_loader))
-    test_accuracies.append(correct / total)
-
-    print(f"Epoch [{epoch+1}/{NUM_EPOCHS}], Loss: {train_losses[-1]:.4f}, "
-          f"Test Loss: {test_losses[-1]:.4f}, Accuracy: {test_accuracies[-1]:.4f}")
-
-def evaluate_performance(y_true, y_pred):
-    cm = confusion_matrix(y_true, y_pred)
     
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=list(lesion_classes.keys()), 
-                yticklabels=list(lesion_classes.keys()))
-    plt.xlabel("Predicted")
-    plt.ylabel("Actual")
-    plt.title("Confusion Matrix")
-    plt.show()
+    print(classification_report(y_true, y_pred, target_names=lesion_classes.keys()))
+    return loss / len(loader.dataset), correct / total
 
-    plt.figure(figsize=(8, 6))
-    plt.plot(range(1, NUM_EPOCHS + 1), train_losses, label="Train Loss", color="blue")
-    plt.plot(range(1, NUM_EPOCHS + 1), test_losses, label="Test Loss", color="red")
-    plt.xlabel("Epochs")
-    plt.ylabel("Loss")
-    plt.title("Training & Test Loss")
-    plt.legend()
+def evaluate_test_model(model, loader, criterion):
+    model.eval()
+    loss, correct, total = 0.0, 0, 0
+    y_true, y_pred = [], []
+    
+    with torch.no_grad():
+        for images, labels in loader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            loss += criterion(outputs, labels).item() * images.size(0)
+            _, predicted = torch.max(outputs, 1)
+            correct += (predicted == labels).sum().item()
+            total += labels.size(0)
+            y_true.extend(labels.cpu().numpy())
+            y_pred.extend(predicted.cpu().numpy())
+    
+    print(classification_report(y_true, y_pred, target_names=lesion_classes.keys()))
+    cm = confusion_matrix(y_true, y_pred)
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=lesion_classes.keys(), yticklabels=lesion_classes.keys())
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
     plt.show()
+    return loss / len(loader.dataset), correct / total
 
-    plt.figure(figsize=(8, 6))
-    plt.plot(range(1, NUM_EPOCHS + 1), test_accuracies, label="Test Accuracy", color="green")
-    plt.xlabel("Epochs")
-    plt.ylabel("Accuracy")
-    plt.title("Test Accuracy Over Epochs")
-    plt.legend()
-    plt.show()
+train_model(model, train_loader, val_loader, criterion, optimizer, epochs=NUM_EPOCHS)
 
-evaluate_performance(y_true, y_pred)
+test_loss, test_acc = evaluate_test_model(model, test_loader, criterion)
+print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
