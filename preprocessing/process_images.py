@@ -8,15 +8,19 @@ from skimage.metrics import structural_similarity as ssim
 
 base_folder = "../HAM10000"
 images_folder = os.path.join(base_folder, "HAM10000_images")
+test_images_folder = os.path.join(base_folder, "ISIC2018_TestSet", "ISIC2018_Task3_Test_Images", "ISIC2018_Task3_Test_Images")
+
 segmentations_folder = os.path.join(base_folder, "HAM10000_segmentations")
 
 processed_images_folder = os.path.join(base_folder, "HAM10000_images_processed")
 processed_segmentations_folder = os.path.join(base_folder, "HAM10000_segmentations_processed")
+processed_test_images_folder = os.path.join(base_folder, "ISIC2018_Task3_Test_Images_processed")
 
 target_size = (256, 256)
 
 os.makedirs(processed_images_folder, exist_ok=True)
 os.makedirs(processed_segmentations_folder, exist_ok=True)
+os.makedirs(processed_test_images_folder, exist_ok=True)
 
 def remove_hair(img):
     gray_scale = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -91,3 +95,4 @@ def process_images(input_folder, output_folder, target_size):
     print(f"All segmentation masks processed and saved to '{output_folder}'.")
 
 process_images(images_folder, processed_images_folder, target_size)
+process_images(test_images_folder, processed_test_images_folder, target_size)
