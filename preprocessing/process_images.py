@@ -8,13 +8,12 @@ from skimage.metrics import structural_similarity as ssim
 
 base_folder = "../HAM10000"
 images_folder = os.path.join(base_folder, "HAM10000_images")
-test_images_folder = os.path.join(base_folder, "ISIC2018_TestSet", "ISIC2018_Task3_Test_Images", "ISIC2018_Task3_Test_Images")
-
+test_images_folder = os.path.join(base_folder, "ISIC2018_TestSet", "ISIC2018_Images")
 segmentations_folder = os.path.join(base_folder, "HAM10000_segmentations")
 
 processed_images_folder = os.path.join(base_folder, "HAM10000_images_processed")
 processed_segmentations_folder = os.path.join(base_folder, "HAM10000_segmentations_processed")
-processed_test_images_folder = os.path.join(base_folder, "ISIC2018_Task3_Test_Images_processed")
+processed_test_images_folder = os.path.join(base_folder, "ISIC2018_Images_processed")
 
 target_size = (256, 256)
 
