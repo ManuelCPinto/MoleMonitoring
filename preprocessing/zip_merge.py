@@ -10,9 +10,9 @@ ham_folder = os.path.join(base_path, "HAM10000")
 images_folder = os.path.join(ham_folder, "HAM10000_images")
 segmentations_folder = os.path.join(ham_folder, "HAM10000_segmentations")
 
-test_folder = os.path.join(ham_folder, "ISIC2018_TestSet")
-test_images_folder = os.path.join(test_folder, "ISIC2018_Images")  
-isic_metadata_file = os.path.join(test_folder, "ISIC2018_metadata")
+isic_folder = os.path.join(base_path, "ISIC2018")
+isic_images_folder = os.path.join(isic_folder, "ISIC2018_images")
+isic_metadata_file = os.path.join(isic_folder, "ISIC2018_metadata")
 
 def extract_zip_flat(zip_path, target_folder):
     if not os.path.exists(zip_path):
@@ -55,8 +55,8 @@ with zipfile.ZipFile(zip_file, 'r') as zip_ref:
 
 os.makedirs(images_folder, exist_ok=True)
 os.makedirs(segmentations_folder, exist_ok=True)
-os.makedirs(test_folder, exist_ok=True)
-os.makedirs(test_images_folder, exist_ok=True)
+os.makedirs(isic_folder, exist_ok=True)
+os.makedirs(isic_images_folder, exist_ok=True)
 
 ham_zip_1 = os.path.join(output_folder, "HAM10000_images_part_1.zip")
 ham_zip_2 = os.path.join(output_folder, "HAM10000_images_part_2.zip")
@@ -83,9 +83,9 @@ ham_metadata_target = os.path.join(ham_folder, "HAM10000_metadata")
 if os.path.exists(ham_metadata_source):
     shutil.move(ham_metadata_source, ham_metadata_target)
 
-test_images_zip = os.path.join(output_folder, "ISIC2018_Task3_Test_Images.zip")
-if os.path.exists(test_images_zip):
-    extract_zip_flat(test_images_zip, test_images_folder)
+isic_images_zip = os.path.join(output_folder, "ISIC2018_Task3_Test_Images.zip")
+if os.path.exists(isic_images_zip):
+    extract_zip_flat(isic_images_zip, isic_images_folder)
 
 groundtruth_csv = os.path.join(output_folder, "ISIC2018_Task3_Test_GroundTruth.csv")
 if os.path.exists(groundtruth_csv):
@@ -95,8 +95,10 @@ unwanted_csv = os.path.join(output_folder, "ISIC2018_Task3_NatureMedicine_AI_Ima
 if os.path.exists(unwanted_csv):
     os.remove(unwanted_csv)
 
-print("Removing unnecessary files and folders...")
+print("Removing temporary extracted files/folders...")
 if os.path.exists(output_folder):
     shutil.rmtree(output_folder)
 if os.path.exists(zip_file):
     os.remove(zip_file)
+
+print("Done! HAM10000 -> 'HAM10000_images' and 'HAM10000_segmentations'; ISIC2018 -> 'ISIC2018_images' and 'ISIC2018_metadata'")

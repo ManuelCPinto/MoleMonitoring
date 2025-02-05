@@ -172,6 +172,7 @@ cython_debug/
 
 
 # HAM 10000
+ISIC2018/
 HAM10000/
 plots/
 
