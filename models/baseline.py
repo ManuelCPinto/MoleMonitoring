@@ -11,11 +11,12 @@ import pandas as pd
 from PIL import Image
 
 BASE_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "HAM10000"))
+BASE_TEST_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "ISIC2018"))
 IMAGES_FOLDER = os.path.join(BASE_FOLDER, "HAM10000_images_processed", "rgb")
 METADATA_FILE = os.path.join(BASE_FOLDER, "HAM10000_metadata")
 
-TEST_FOLDER = os.path.join(BASE_FOLDER, "ISIC2018_Images_processed", "rgb")
-TEST_METADATA = os.path.join(BASE_FOLDER, "ISIC2018_TestSet", "ISIC2018_metadata")
+TEST_FOLDER = os.path.join(BASE_TEST_FOLDER, "ISIC2018_images_processed", "rgb")
+TEST_METADATA = os.path.join(BASE_TEST_FOLDER, "ISIC2018_metadata")
 
 NUM_SAMPLES = 10000
 TRAIN_SPLIT = 0.8  
