@@ -38,6 +38,9 @@ dependencies:
   path_provider: ^2.1.5
   path: ^1.9.0
   camera_android_camerax: 0.6.11
+  permission_handler:
+    path: plugins/permission_handler-11.3.1
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

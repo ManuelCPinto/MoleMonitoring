@@ -1,6 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:molemonitoringapp/screens/camerascreen.dart';
+import 'package:molemonitoringapp/screens/galleryscreen.dart';
+
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -9,12 +11,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-
-
-  @override
-  void initState() {
-    super.initState();
-  }
   Future<void> _navigateToCameraScreen(BuildContext context) async {
     try {
       final cameras = await availableCameras();
@@ -32,35 +28,72 @@ class _MainScreenState extends State<MainScreen> {
       print('Error accessing cameras: $e');
     }
   }
+
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mole Monitor'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () {
+              Scaffold.of(context).openDrawer(); // Open the menu
+            },
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person), // Profile icon
+            onPressed: () {
+              // TODO: Add profile screen navigation
+            },
+          ),
+        ],
       ),
-
+      drawer: Drawer(
+        child: ListView(
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Text(
+                'Menu',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.camera_alt),
+              title: Text('Take a Picture'),
+              onTap: () => _navigateToCameraScreen(context),
+            ),
+            ListTile(
+              leading: Icon(Icons.image),
+              title: Text('Select from Gallery'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const GalleryScreen()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
       body: Center(
-
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             SizedBox(
-              width: 150, // Adjust width as needed
-              height: 60,  // Adjust height as needed
+              width: 150,
+              height: 60,
               child: FloatingActionButton(
                 onPressed: () => _navigateToCameraScreen(context),
                 child: Text(
                   'Go to this screen that is very cool',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center, // Ensures text is centered
+                  textAlign: TextAlign.center,
                 ),
               ),
             )
@@ -70,4 +103,3 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
-
