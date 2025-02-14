@@ -1,8 +1,8 @@
+import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:molemonitoringapp/screens/display_picture.dart';
-
-
+import 'package:molemonitoringapp/utils/storage_helper.dart'; // Import storage helper
 
 class CameraApp extends StatefulWidget {
   final CameraDescription camera;
@@ -19,22 +19,12 @@ class _CameraAppState extends State<CameraApp> {
   @override
   void initState() {
     super.initState();
-    controller = CameraController(widget.camera, ResolutionPreset.max);
-    _initializeControllerFuture = controller.initialize().then((_) {
-      if (!mounted) return;
-      setState(() {});
-    }).catchError((Object e) {
-      if (e is CameraException) {
-        switch (e.code) {
-          case 'CameraAccessDenied':
-          // Handle access errors here.
-            break;
-          default:
-          // Handle other errors here.
-            break;
-        }
-      }
-    });
+    controller = CameraController(
+      widget.camera,
+      ResolutionPreset.max,
+      enableAudio: false, // 🔥 Fix: Disables microphone permission
+    );
+    _initializeControllerFuture = controller.initialize();
   }
 
   @override
@@ -56,22 +46,22 @@ class _CameraAppState extends State<CameraApp> {
             // Ensure the camera is initialized.
             await _initializeControllerFuture;
 
-            // Attempt to take a picture and get the file where it was saved.
+            // Take a picture
             final image = await controller.takePicture();
+
+            // Save image locally
+            final savedImagePath = await StorageHelper.saveImage(File(image.path));
 
             if (!context.mounted) return;
 
-            // Navigate to a new screen to display the picture.
+            // Navigate to display picture screen
             await Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => DisplayPictureScreen(
-                  imagePath: image.path,
-                ),
+                builder: (context) => DisplayPictureScreen(imagePath: savedImagePath),
               ),
             );
           } catch (e) {
-            // If an error occurs, log the error to the console.
-            print(e);
+            print("Camera error: $e");
           }
         },
         child: const Icon(Icons.camera_alt),

@@ -3,6 +3,7 @@ import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:molemonitoringapp/screens/camera_tab.dart';
 import 'package:molemonitoringapp/screens/mainscreen.dart';
 import 'package:molemonitoringapp/screens/resultsscreen.dart';
+import 'package:molemonitoringapp/screens/profilescreen.dart';
 
 class BottomNavScreen extends StatefulWidget {
   const BottomNavScreen({Key? key}) : super(key: key);
@@ -16,8 +17,9 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
 
   final List<Widget> _pages = [
     const HomeScreen(),      // Left-most tab
-    const CameraTab(),       // Center tab
-    const ResultsScreen(),   // Right-most tab
+    const CameraTab(),       // Left-Center tab
+    const ResultsScreen(),  // Right-Center tab
+    const ProfileScreen(),// Right-most tab
   ];
 
   void _onTabTapped(int index) {
@@ -95,21 +97,14 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
               selectedColor: primaryColor,
             ),
 
+            SalomonBottomBarItem(
+              icon: const Icon(Icons.person),
+              title: const Text("Profile"),
+              selectedColor: primaryColor,
+            ),
           ],
         ),
       ),
     );
   }
 }
-
-/*
-            /// 4. Activity
-
-
-            /// 5. Profile
-            SalomonBottomBarItem(
-              icon: const Icon(Icons.person),
-              title: const Text("Profile"),
-              selectedColor: primaryColor,
-            ),
- */

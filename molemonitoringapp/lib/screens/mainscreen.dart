@@ -6,18 +6,19 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    // Example last prediction data (replace with actual data logic)
+    final bool hasResults = false; // Change this based on actual results
+    final String lastPrediction = "Benign"; // Example result
 
+    return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               // Hero Section with a Gradient Background
               const SizedBox(height: 20),
-
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -58,83 +59,89 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-              // Latest Analysis Card
+
+              // Last Prediction Result Section
               Card(
-                color: const Color(0xFF1A1A2E), // Dark background
-                elevation: 3,
+                color: Colors.white, // Light background for contrast
+                elevation: 4,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: ListTile(
-                  leading: const Icon(Icons.info, color: Color(0xFF00BCD4)), // Cyan
-                  title: Text('No recent analysis', style: GoogleFonts.lato(color: Colors.white)),
-                  subtitle: Text('Your latest mole analysis will appear here.', style: GoogleFonts.lato(color: Colors.white70)),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.arrow_forward, color: Color(0xFF00BCD4)), // Cyan
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/results');
-                    },
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      const Text(
+                        "Latest Analysis Result",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 10),
+                      hasResults
+                          ? Column(
+                        children: [
+                          Text(
+                            lastPrediction,
+                            style: GoogleFonts.lato(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: lastPrediction == "Benign" ? Colors.green : Colors.red,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/results');
+                            },
+                            child: const Text("View Details"),
+                          ),
+                        ],
+                      )
+                          : Text(
+                        "No previous results",
+                        style: GoogleFonts.lato(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
                   ),
                 ),
               ),
               const SizedBox(height: 30),
-              // Feature Highlights Section
+
+              // Navigation Cards Section
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Features:',
+                    'Quick Actions:',
                     style: GoogleFonts.lato(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
                   ),
                   const SizedBox(height: 10),
-                  Card(
-                    color: const Color(0xFF1A1A2E), // Dark background
-                    child: ListTile(
-                      leading: const Icon(Icons.camera_alt, color: Color(0xFF00BCD4)), // Cyan
-                      title: Text('Capture High-Quality Photos', style: GoogleFonts.lato(color: Colors.white)),
-                      subtitle: Text('Use your camera to document skin changes.', style: GoogleFonts.lato(color: Colors.white70)),
-                    ),
+
+                  _buildNavigationCard(
+                    context,
+                    icon: Icons.camera_alt,
+                    title: "Monitor Now",
+                    subtitle: "Capture a new mole image for analysis",
+                    onTap: () {
+                      Navigator.pushNamed(context, '/camera');
+                    },
                   ),
-                  Card(
-                    color: const Color(0xFF1A1A2E),
-                    child: ListTile(
-                      leading: const Icon(Icons.history, color: Color(0xFF00BCD4)),
-                      title: Text('Review Past Results', style: GoogleFonts.lato(color: Colors.white)),
-                      subtitle: Text('Easily access your previous analyses.', style: GoogleFonts.lato(color: Colors.white70)),
-                    ),
+                  _buildNavigationCard(
+                    context,
+                    icon: Icons.history,
+                    title: "Check Previous Results",
+                    subtitle: "View all your past skin analysis",
+                    onTap: () {
+                      Navigator.pushNamed(context, '/results');
+                    },
                   ),
-                ],
-              ),
-              const SizedBox(height: 30),
-              // Tips Section
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Tips for Skin Monitoring:',
-                    style: GoogleFonts.lato(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
-                  ),
-                  const SizedBox(height: 10),
-                  Card(
-                    color: const Color(0xFF1A1A2E),
-                    child: ListTile(
-                      leading: const Icon(Icons.check_circle, color: Color(0xFF00E5FF)), // Light Cyan
-                      title: Text('Take photos in good lighting conditions.', style: GoogleFonts.lato(color: Colors.white)),
-                    ),
-                  ),
-                  Card(
-                    color: const Color(0xFF1A1A2E),
-                    child: ListTile(
-                      leading: const Icon(Icons.check_circle, color: Color(0xFF00E5FF)),
-                      title: Text('Use the same angle for better comparison.', style: GoogleFonts.lato(color: Colors.white)),
-                    ),
-                  ),
-                  Card(
-                    color: const Color(0xFF1A1A2E),
-                    child: ListTile(
-                      leading: const Icon(Icons.check_circle, color: Color(0xFF00E5FF)),
-                      title: Text('Consult a dermatologist for any concerns.', style: GoogleFonts.lato(color: Colors.white)),
-                    ),
+                  _buildNavigationCard(
+                    context,
+                    icon: Icons.person,
+                    title: "View Profile",
+                    subtitle: "Edit your profile and settings",
+                    onTap: () {
+                      Navigator.pushNamed(context, '/profile');
+                    },
                   ),
                 ],
               ),
@@ -142,7 +149,25 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
-      backgroundColor: Colors.white38, // Deep dark background
+      backgroundColor: Colors.white38,
+    );
+  }
+
+  // Custom method to generate navigation cards
+  Widget _buildNavigationCard(BuildContext context, {required IconData icon, required String title, required String subtitle, required VoidCallback onTap}) {
+    return Card(
+      color: const Color(0xFF1A1A2E), // Dark background
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: const Color(0xFF00BCD4)), // Cyan
+        title: Text(title, style: GoogleFonts.lato(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        subtitle: Text(subtitle, style: GoogleFonts.lato(color: Colors.white70)),
+        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white70),
+        onTap: onTap,
+      ),
     );
   }
 }

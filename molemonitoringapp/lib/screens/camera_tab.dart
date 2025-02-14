@@ -26,41 +26,21 @@ class _CameraTabState extends State<CameraTab> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
-            appBar: AppBar(
-              title: const Text('Camera'),
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              centerTitle: true,
-            ),
+            appBar: AppBar(title: const Text('Camera')),
             body: const Center(child: CircularProgressIndicator()),
           );
         } else if (snapshot.hasError) {
           return Scaffold(
-            appBar: AppBar(
-              title: const Text('Camera'),
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              centerTitle: true,
-            ),
+            appBar: AppBar(title: const Text('Camera')),
             body: Center(
               child: Text('Error: ${snapshot.error}', style: GoogleFonts.lato()),
             ),
           );
         } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Camera'),
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              centerTitle: true,
-            ),
-            body: CameraApp(camera: snapshot.data![0]),
-
-          );
+          return CameraApp(camera: snapshot.data![0]); // ✅ Directly show camera
         } else {
           return Scaffold(
-            appBar: AppBar(
-              title: const Text('Camera'),
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              centerTitle: true,
-            ),
+            appBar: AppBar(title: const Text('Camera')),
             body: Center(
               child: Text('No cameras available', style: GoogleFonts.lato()),
             ),
