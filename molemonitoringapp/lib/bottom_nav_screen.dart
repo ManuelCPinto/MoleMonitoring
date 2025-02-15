@@ -15,12 +15,18 @@ class BottomNavScreen extends StatefulWidget {
 class _BottomNavScreenState extends State<BottomNavScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = [
-    const HomeScreen(),      // Left-most tab
-    const CameraTab(),       // Left-Center tab
-    const ResultsScreen(),  // Right-Center tab
-    const ProfileScreen(),// Right-most tab
-  ];
+  final List<Widget> _pages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _pages.addAll([
+      HomeScreen(onTabTapped: _onTabTapped), // Pass navigation function
+      const CameraTab(),
+      const ResultsScreen(),
+      const ProfileScreen(),
+    ]);
+  }
 
   void _onTabTapped(int index) {
     setState(() {
@@ -30,14 +36,11 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Cor principal (podes ajustar)
     const Color primaryColor = Color(0xFF005EB8);
 
     return Scaffold(
-      // Mostra a página correspondente ao índice atual
       body: _pages[_currentIndex],
 
-      // Bottom Nav Bar no estilo do screenshot
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -53,17 +56,13 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
           currentIndex: _currentIndex,
           onTap: _onTabTapped,
           items: [
-            /// 1. Home
             SalomonBottomBarItem(
               icon: const Icon(Icons.home),
               title: const Text("Home"),
               selectedColor: primaryColor,
             ),
 
-            /// 2. Explore
-
-
-            /// 3. Book (ícone central maior)
+            // Camera (monitor)
             SalomonBottomBarItem(
               icon: Stack(
                 alignment: Alignment.center,
@@ -86,7 +85,6 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
                   const Icon(Icons.camera_alt, color: Colors.white),
                 ],
               ),
-
               title: const Text("Monitor"),
               selectedColor: primaryColor,
             ),
