@@ -1,7 +1,6 @@
 import os
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -13,15 +12,16 @@ from PIL import Image
 import numpy as np
 
 BASE_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "HAM10000"))
+BASE_TEST_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "ISIC2018"))
 IMAGES_FOLDER = os.path.join(BASE_FOLDER, "HAM10000_images_processed", "rgb")
 METADATA_FILE = os.path.join(BASE_FOLDER, "HAM10000_metadata")
 
-TEST_FOLDER = os.path.join(BASE_FOLDER, "ISIC2018_Images_processed", "rgb")
-TEST_METADATA = os.path.join(BASE_FOLDER, "ISIC2018_TestSet", "ISIC2018_metadata")
+TEST_FOLDER = os.path.join(BASE_TEST_FOLDER, "ISIC2018_images_processed", "rgb")
+TEST_METADATA = os.path.join(BASE_TEST_FOLDER, "ISIC2018_metadata")
 
 NUM_SAMPLES = 10000
 TRAIN_SPLIT = 0.8  
-NUM_EPOCHS = 40
+NUM_EPOCHS = 10
 BATCH_SIZE = 32
 NUM_CLASSES = None
 
@@ -37,6 +37,7 @@ test_metadata["label"] = test_metadata["dx"].map(lesion_classes)
 
 NUM_CLASSES = len(lesion_classes)
 
+# Weight calculations
 class_counts = metadata["label"].value_counts().sort_index().values
 sample_weights = np.array([1.0 / class_counts[label] for label in metadata["label"]])
 sample_weights = torch.tensor(sample_weights, dtype=torch.float)
@@ -87,6 +88,7 @@ train_size = int(TRAIN_SPLIT * len(full_dataset))
 val_size = len(full_dataset) - train_size
 train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
 
+# Weighted sampling
 sampler = WeightedRandomSampler(weights=sample_weights[train_dataset.indices], num_samples=len(train_dataset), replacement=True)
 
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=sampler)
