@@ -6,7 +6,7 @@ import 'package:molemonitoringapp/screens/resultsscreen.dart';
 import 'package:molemonitoringapp/screens/profilescreen.dart';
 
 class BottomNavScreen extends StatefulWidget {
-  const BottomNavScreen({Key? key}) : super(key: key);
+  const BottomNavScreen({super.key});
 
   @override
   State<BottomNavScreen> createState() => _BottomNavScreenState();
@@ -21,7 +21,7 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
   void initState() {
     super.initState();
     _pages.addAll([
-      HomeScreen(onTabTapped: _onTabTapped), // Pass navigation function
+      HomeScreen(onTabTapped: _onTabTapped),
       const CameraTab(),
       const ResultsScreen(),
       const ProfileScreen(),
@@ -34,6 +34,29 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
     });
   }
 
+  Widget _buildBubbleIcon(IconData icon, bool isSelected) {
+    const Color primaryColor = Color(0xFF005EB8);
+
+    if (isSelected) {
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: primaryColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          Icon(icon, color: Colors.white),
+        ],
+      );
+    } else {
+      return Icon(icon, color: Colors.grey);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     const Color primaryColor = Color(0xFF005EB8);
@@ -44,61 +67,30 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: Offset(0, -1),
-            ),
-          ],
         ),
         child: SalomonBottomBar(
           currentIndex: _currentIndex,
           onTap: _onTabTapped,
+          itemShape: const CircleBorder(),
+          selectedColorOpacity: 0.0,
+          selectedItemColor: Colors.transparent,
+          unselectedItemColor: Colors.transparent,
           items: [
             SalomonBottomBarItem(
-              icon: const Icon(Icons.home),
-              title: const Text("Home"),
-              selectedColor: primaryColor,
+              icon: _buildBubbleIcon(Icons.home, _currentIndex == 0),
+              title: Container(height: 0.0),
             ),
-
-            // Camera (monitor)
             SalomonBottomBarItem(
-              icon: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: primaryColor,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26.withOpacity(0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.camera_alt, color: Colors.white),
-                ],
-              ),
-              title: const Text("Monitor"),
-              selectedColor: primaryColor,
+              icon: _buildBubbleIcon(Icons.camera_alt, _currentIndex == 1),
+              title: Container(height: 0.0),
             ),
-
             SalomonBottomBarItem(
-              icon: const Icon(Icons.bar_chart),
-              title: const Text("Reports"),
-              selectedColor: primaryColor,
+              icon: _buildBubbleIcon(Icons.bar_chart, _currentIndex == 2),
+              title: Container(height: 0.0),
             ),
-
             SalomonBottomBarItem(
-              icon: const Icon(Icons.person),
-              title: const Text("Profile"),
-              selectedColor: primaryColor,
+              icon: _buildBubbleIcon(Icons.person, _currentIndex == 3),
+              title: Container(height: 0.0),
             ),
           ],
         ),
