@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sqflite/sqflite.dart';
-import '/utils/database_helper.dart'; // Ensure you import your DatabaseHelper file
-import '/utils/storage_helper.dart';  // Import StorageHelper if you later need to load images
+import '/utils/database_helper.dart';
+import 'result_detail_screen.dart';
 
 class ResultsScreen extends StatefulWidget {
   const ResultsScreen({Key? key}) : super(key: key);
@@ -34,16 +34,18 @@ class _ResultsScreenState extends State<ResultsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Past Results'),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        title: const Text('Past Results', style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.white, // Keep theme white
+        elevation: 0,
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.black),
             onPressed: _refreshPredictions,
           ),
         ],
       ),
+      backgroundColor: Colors.white,
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _predictionsFuture,
         builder: (context, snapshot) {
@@ -62,39 +64,36 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   itemCount: predictions.length,
                   itemBuilder: (context, index) {
                     final prediction = predictions[index];
+                    final String timestamp = prediction['timestamp'] ?? 'No date';
+
                     return Card(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 2,
                       child: ListTile(
-                        leading: const Icon(Icons.assignment_outlined),
+                        contentPadding: const EdgeInsets.all(12),
+                        leading: const Icon(Icons.assignment_outlined, color: Colors.deepPurple),
                         title: Text(
                           prediction['prediction'] ?? 'No prediction',
-                          style: GoogleFonts.lato(fontWeight: FontWeight.bold),
+                          style: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 4.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Confidence: ${prediction['confidence'] ?? 'N/A'}',
-                                style: GoogleFonts.lato(),
-                              ),
-                              Text(
-                                'Timestamp: ${prediction['timestamp'] ?? 'N/A'}',
-                                style: GoogleFonts.lato(fontSize: 12),
-                              ),
-                              Text(
-                                'Processing Time: ${prediction['processing_time'] ?? 'N/A'}',
-                                style: GoogleFonts.lato(fontSize: 12),
-                              ),
-                            ],
-                          ),
+                        subtitle: Text(
+                          'Confidence: ${prediction['confidence'] ?? 'N/A'}\nTimestamp: $timestamp',
+                          style: GoogleFonts.lato(fontSize: 14, color: Colors.grey[700]),
                         ),
-                        // If you decide to store an image path along with the prediction,
-                        // you could show a thumbnail here using StorageHelper.
-                        // For example:
-                        // leading: Image.file(File(prediction['image_path'])),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (context, animation, secondaryAnimation) =>
+                                  ResultDetailScreen(prediction: prediction),
+                              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                return FadeTransition(opacity: animation, child: child);
+                              },
+                            ),
+                          );
+                        },
                       ),
                     );
                   },
@@ -111,28 +110,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.history,
-                size: 80, color: Colors.deepPurpleAccent),
-            const SizedBox(height: 20),
-            Text(
-              'No results available',
-              style: GoogleFonts.lato(
-                  fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Your past analysis results will appear here.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.lato(fontSize: 16, color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
+      child: Text('No results available', style: GoogleFonts.lato(fontSize: 18, fontWeight: FontWeight.bold)),
     );
   }
 }
