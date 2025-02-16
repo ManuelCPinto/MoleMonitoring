@@ -29,13 +29,15 @@ class DatabaseHelper {
         await db.execute('''
           CREATE TABLE predictions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT,
             prediction TEXT,
             confidence TEXT,
+            timestamp TEXT,
+            processing_time TEXT,
             details TEXT,
-            processing_time TEXT
+            image_path TEXT
           )
         ''');
+
       },
     );
   }
