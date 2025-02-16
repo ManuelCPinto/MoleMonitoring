@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:molemonitoringapp/screens/display_picture.dart';
 import 'package:molemonitoringapp/utils/storage_helper.dart';
 
 class CameraApp extends StatefulWidget {
