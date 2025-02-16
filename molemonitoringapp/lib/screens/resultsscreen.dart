@@ -35,7 +35,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Past Results', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white, // Keep theme white
+        backgroundColor: Colors.white38,
         elevation: 0,
         centerTitle: true,
         actions: [
@@ -45,7 +45,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
           ),
         ],
       ),
-      backgroundColor: Colors.white,
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _predictionsFuture,
         builder: (context, snapshot) {
@@ -67,6 +66,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     final String timestamp = prediction['timestamp'] ?? 'No date';
 
                     return Card(
+                      color: Colors.white,
                       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 2,
