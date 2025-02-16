@@ -7,18 +7,19 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:http_parser/http_parser.dart';
 
+import '../utils/database_helper.dart';
+import '../utils/storage_helper.dart';
+
 class DisplayPictureScreen extends StatelessWidget {
   final String imagePath;
   const DisplayPictureScreen({Key? key, required this.imagePath}) : super(key: key);
-  final String accessToken = "ya29.a0AXeO80Q8wD1xn6yeNkON3aegckL_q7nzGRFq3-lavTZWWA3Z2aIyuh9GN_nND_0w5S2tqRXNxHSnZN2ARslfbMErWNMzDnHV0LJMNrkP-nvjMFqgAI79lM793r8jiIpSxOzc8Oa9YlXV6ZN3nlywC-buQp0Oe38KWe9u1D_y6CNtSK4aCgYKAakSARMSFQHGX2Mi25oiuEsqP3YP4zys8BeXBg0182";
+  final String accessToken = "ya29.a0AXeO80Qu5OY_H5UveV3DqwqqqjLYPz9WldoVtebt3Ypb14jIkLaiZV4N__g-PRTz2hZAM0pt340-tQcH4p0UvlKpYD3aeKAcFwJiyi-wkN5d2C4_SQVt6TADg3oyR-BoWIS2_hXvySZ184Ssc6LQMA1Oxwzh_XfDzG_jWDkrLS_OmFsaCgYKAXoSARMSFQHGX2MiKyI_86A1l8DPwB-sxrYVZQ0182";
   final String parseURI = 'https://europe-west3-aiplatform.googleapis.com/v1/projects/sic-molemonitoring/locations/europe-west3/endpoints/4241137405727342592:predict';
   // Function to send a prediction request with an image file
 
   Future<void> sendPredictionRequest(String imagePath, String accessToken) async {
     // Replace with your actual Vertex AI endpoint URL.
-    final uri = Uri.parse(
-      parseURI
-    );
+    final uri = Uri.parse(parseURI);
 
     // Read the original image file as bytes.
     final originalBytes = await File(imagePath).readAsBytes();
@@ -41,8 +42,7 @@ class DisplayPictureScreen extends StatelessWidget {
     } else {
       finalBytes = originalBytes;
     }
-    //File('my_image.jpg').writeAsBytes(finalBytes!);
-    //await Gal.putImage(imagePath);
+
     // Convert the image bytes to a base64 string.
     final base64Image = base64Encode(finalBytes!);
 
@@ -66,8 +66,32 @@ class DisplayPictureScreen extends StatelessWidget {
     if (response.statusCode == 200) {
       final result = json.decode(response.body);
       print('Prediction result: $result');
-      print(base64Image);
-      print(response.body);
+
+      final predictionData = result['predictions'][0];
+      final String prediction = predictionData['prediction'];
+      final String confidence = predictionData['confidence'];
+      final String timestamp = predictionData['timestamp'];
+      final String processingTime = predictionData['processing_time'];
+      final Map<String, dynamic> detailedPredictions = predictionData['detailed_predictions'];
+
+      // Save the image locally.
+      final savedImagePath = await StorageHelper.saveImage(File(imagePath));
+
+      // Build the record to insert into the database.
+      final predictionRecord = {
+        'prediction': prediction,
+        'confidence': confidence,
+        'timestamp': timestamp,
+        'processing_time': processingTime,
+        // Save the detailed predictions map as a JSON string.
+        'details': json.encode(detailedPredictions),
+        'image_path': savedImagePath,
+      };
+
+      // Insert the prediction record into the database.
+      await DatabaseHelper().insertPrediction(predictionRecord);
+
+      print('Saved prediction: $predictionRecord');
     } else {
       print('Error: ${response.statusCode} - ${response.body}');
     }
