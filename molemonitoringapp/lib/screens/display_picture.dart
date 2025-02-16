@@ -10,7 +10,7 @@ import 'package:http_parser/http_parser.dart';
 class DisplayPictureScreen extends StatelessWidget {
   final String imagePath;
   const DisplayPictureScreen({Key? key, required this.imagePath}) : super(key: key);
-  final String accessToken = "ya29.a0AXeO80TzCKeDuxdX3VR4L3yD4MWeIGicDWxEu--TG18b1PqaLptnlRmJ8i6cFVElYVFIgiWmYX-_lzmwibG6tR5CQiyKu79q9QdnPK2VMQoIfEN-x3YsjtiQIZE-Et9CVQ60PcCvOGZOL16uqRZLcI74WQZAgGAaqFLdGMKKc7qhhdcaCgYKAY0SARMSFQHGX2MiPoTCp9-xf3IeNdIr3dWBiw0182";
+  final String accessToken = "ya29.a0AXeO80Q8wD1xn6yeNkON3aegckL_q7nzGRFq3-lavTZWWA3Z2aIyuh9GN_nND_0w5S2tqRXNxHSnZN2ARslfbMErWNMzDnHV0LJMNrkP-nvjMFqgAI79lM793r8jiIpSxOzc8Oa9YlXV6ZN3nlywC-buQp0Oe38KWe9u1D_y6CNtSK4aCgYKAakSARMSFQHGX2Mi25oiuEsqP3YP4zys8BeXBg0182";
   final String parseURI = 'https://europe-west3-aiplatform.googleapis.com/v1/projects/sic-molemonitoring/locations/europe-west3/endpoints/4241137405727342592:predict';
   // Function to send a prediction request with an image file
 
