@@ -1,0 +1,1 @@
+from .model import SoftAttention, InceptionResNetV2_SoftAttention

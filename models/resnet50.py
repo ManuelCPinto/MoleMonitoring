@@ -18,6 +18,7 @@ from albumentations.pytorch import ToTensorV2
 # Define Paths
 # ---------------------------
 BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
 HAM_FOLDER = os.path.join(BASE_PATH, "HAM10000")
 HAM_IMAGES_FOLDER = os.path.join(HAM_FOLDER, "HAM10000_images")
 HAM_METADATA_FILE = os.path.join(HAM_FOLDER, "HAM10000_metadata")
@@ -26,7 +27,7 @@ ISIC_FOLDER = os.path.join(BASE_PATH, "ISIC2018")
 ISIC_IMAGES_FOLDER = os.path.join(ISIC_FOLDER, "ISIC2018_images")
 ISIC_METADATA_FILE = os.path.join(ISIC_FOLDER, "ISIC2018_metadata")
 
-CHECKPOINT_PATH = "best_model.pth"
+CHECKPOINT_PATH = "best_model.pth" 
 
 # ---------------------------
 # Hyperparameters
@@ -83,7 +84,7 @@ class SkinLesionDataset(Dataset):
         return len(self.augmented_data)
 
     def __getitem__(self, idx):
-        row = self.augmented_data.iloc[idx]
+        row = self.metadata.iloc[idx]
         img_id = row["image_id"]
         dx = row["dx"]
         label = self.label_map[dx]
@@ -222,3 +223,17 @@ def evaluate_model():
     plt.show()
 
 evaluate_model()
+
+y_true, y_pred = [], []
+
+with torch.no_grad():
+    for images, labels in test_loader:
+        images, labels = images.to("cuda"), labels.to("cuda")
+        outputs = model(images)
+        preds = outputs.argmax(dim=1)
+
+        y_true.extend(labels.cpu().numpy())
+        y_pred.extend(preds.cpu().numpy())
+
+print("\n**Classification Report on ISIC2018:**")
+print(classification_report(y_true, y_pred, target_names=ham_classes))
