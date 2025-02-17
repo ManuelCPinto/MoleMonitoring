@@ -37,7 +37,6 @@ test_metadata["label"] = test_metadata["dx"].map(lesion_classes)
 
 NUM_CLASSES = len(lesion_classes)
 
-# Weight calculations
 class_counts = metadata["label"].value_counts().sort_index().values
 sample_weights = np.array([1.0 / class_counts[label] for label in metadata["label"]])
 sample_weights = torch.tensor(sample_weights, dtype=torch.float)
@@ -88,7 +87,6 @@ train_size = int(TRAIN_SPLIT * len(full_dataset))
 val_size = len(full_dataset) - train_size
 train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
 
-# Weighted sampling
 sampler = WeightedRandomSampler(weights=sample_weights[train_dataset.indices], num_samples=len(train_dataset), replacement=True)
 
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=sampler)
@@ -157,7 +155,6 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, epochs=10
         
         print(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss/len(train_loader.dataset):.4f}, Train Acc: {train_acc:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
     
-    # Plot training and validation loss
     plt.figure(figsize=(12, 5))
     plt.subplot(1, 2, 1)
     plt.plot(range(1, epochs+1), train_losses, label='Train Loss')
