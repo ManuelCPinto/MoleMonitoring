@@ -47,6 +47,16 @@ class DatabaseHelper {
     return await db.insert("predictions", prediction);
   }
 
+  Future<int> deletePredictionById(int id) async {
+    final db = await database; // 'database' should be your opened Database instance
+    return await db.delete(
+      'predictions', // Replace with your actual table name
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+
   Future<List<Map<String, dynamic>>> getPredictions() async {
     Database db = await database;
     return await db.query("predictions", orderBy: "id DESC");

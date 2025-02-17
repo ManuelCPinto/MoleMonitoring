@@ -8,7 +8,11 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:molemonitoringapp/utils/storage_helper.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../bottom_nav_screen.dart';
 import '../utils/database_helper.dart';
+import 'package:molemonitoringapp/screens/mainscreen.dart';
+
+import '../utils/success_modal.dart';
 
 class CameraApp extends StatefulWidget {
   final CameraDescription camera;
@@ -27,7 +31,7 @@ class _CameraAppState extends State<CameraApp> {
   String? capturedImagePath;
 
   // Dados do teu endpoint
-  final String accessToken = "ya29.a0AXeO80Td_mDLnuATgXezCfteI6Hqv0ZhfM_7eHSClaSnVCI5tFeKa_4htGZfPiI4cdkQVZH1YyT6QRjztpJ6R7PijL6pY2PUZ9zlkumWs4t88bxQNm7c4NvdBPZjWM-YJoLC2PciPVt_xODv6adQMZPKQkmHL5Y7Hatw2rycO0JoKOwaCgYKAaMSARMSFQHGX2MiLJkhzFF464LRNAuko_AYKA0182";
+  final String accessToken = "ya29.a0AXeO80QFMP9O_toxLDS4xeb_jPuijAOolQefgwyUCQbQyO0syXR7Ujy1ZlAtazBR7uvd9CTVGCO4eWq1S99FkQhmTWVix1VKkuuzBZ0Ts6tyR3Sv6Dz0S5mbI22OmltV0r3ItYZwUq5qJfzIqycpuyucSIhjakLuJkm2q3deGyYpgPYaCgYKAe0SARMSFQHGX2MinOkjYOVUFVzMndVypYkaqQ0182";
   final String parseURI = 'https://europe-west3-aiplatform.googleapis.com/v1/projects/sic-molemonitoring/locations/europe-west3/endpoints/4241137405727342592:predict';
 
   @override
@@ -114,6 +118,7 @@ class _CameraAppState extends State<CameraApp> {
       final result = json.decode(response.body);
       print('Prediction result: $result');
 
+      // Processa os dados da predição...
       final predictionData = result['predictions'][0];
       final String prediction = predictionData['prediction'];
       final String confidence = predictionData['confidence'];
@@ -121,10 +126,10 @@ class _CameraAppState extends State<CameraApp> {
       final String processingTime = predictionData['processing_time'];
       final Map<String, dynamic> detailedPredictions = predictionData['detailed_predictions'];
 
-      // Save the image locally.
+      // Salva a imagem localmente.
       final savedImagePath = await StorageHelper.saveImage(File(imagePath));
 
-      // Build the record to insert into the database.
+      // Cria o registro de predição.
       final predictionRecord = {
         'prediction': prediction,
         'confidence': confidence,
@@ -134,10 +139,20 @@ class _CameraAppState extends State<CameraApp> {
         'image_path': savedImagePath,
       };
 
-      // Insert the prediction record into the database.
+      // Insere o registro na base de dados.
       await DatabaseHelper().insertPrediction(predictionRecord);
 
       print('Saved prediction: $predictionRecord');
+
+      // Redireciona para o BottomNavScreen (por exemplo, com índice 0 para a HomeScreen)
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const BottomNavScreen(initialIndex: 0)),
+      );
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showSuccessModal(context);
+      });
     } else {
       print('Error: ${response.statusCode} - ${response.body}');
     }
