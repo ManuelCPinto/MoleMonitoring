@@ -147,8 +147,14 @@ class _CameraAppState extends State<CameraApp> {
       // Redireciona para o BottomNavScreen (por exemplo, com índice 0 para a HomeScreen)
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const BottomNavScreen(initialIndex: 0)),
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(
+            key: UniqueKey(), // forces a rebuild
+            onTabTapped: (index) {},
+          ),
+        ),
       );
+
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showSuccessModal(context);

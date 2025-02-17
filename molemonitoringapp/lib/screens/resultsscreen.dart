@@ -47,6 +47,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
             TextButton(
               child: const Text("Delete", style: TextStyle(color: Colors.red)),
               onPressed: () async {
+                // Make sure you have implemented deletePredictionById in your DatabaseHelper.
                 await DatabaseHelper().deletePredictionById(recordId);
                 Navigator.of(ctx).pop(true);
               },
@@ -60,64 +61,35 @@ class _ResultsScreenState extends State<ResultsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Past Results', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white38,
-        elevation: 0,
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black),
-            onPressed: _refreshPredictions,
-          ),
-        ],
-      ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _predictionsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData) {
-            final predictions = snapshot.data!;
-            if (predictions.isEmpty) {
-              return _buildEmptyState();
-            } else {
-              return RefreshIndicator(
-                onRefresh: _refreshPredictions,
-                child: ListView.builder(
-                  itemCount: predictions.length,
-                  itemBuilder: (context, index) {
-                    final prediction = predictions[index];
-                    final String timestamp = prediction['timestamp'] ?? 'No date';
-
-                    return Card(
-                      color: Colors.white,
-                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 2,
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        leading: const Icon(Icons.assignment_outlined, color: Colors.deepPurple),
-                        title: Text(
-                          prediction['prediction'] ?? 'No prediction',
-                          style: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        subtitle: Text(
-                          'Confidence: ${prediction['confidence'] ?? 'N/A'}\nTimestamp: $timestamp',
-                          style: GoogleFonts.lato(fontSize: 14, color: Colors.grey[700]),
-                        ),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder: (context, animation, secondaryAnimation) =>
-                                  ResultDetailScreen(prediction: prediction),
-                              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                return FadeTransition(opacity: animation, child: child);
-                              },
+      backgroundColor: Colors.white,
+      // Curved header area at the top
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 160,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _CurvedHeaderPainter(accentBlue),
+                    ),
+                  ),
+                  // Title in center
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 40),
+                      child: Text(
+                        "Past Results",
+                        style: GoogleFonts.roboto(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          shadows: const [
+                            Shadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
                             ),
                           ],
                         ),
@@ -225,21 +197,43 @@ class _ResultsScreenState extends State<ResultsScreen> {
     );
   }
 
+  /// An inviting "No results" card.
   Widget _buildEmptyState() {
     return _buildCard(
       child: Center(
-        child: Text(
-          'No results available',
-          style: GoogleFonts.roboto(fontSize: 18, fontWeight: FontWeight.bold),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.camera_alt, size: 50, color: accentBlue),
+            const SizedBox(height: 10),
+            Text(
+              "No scans found",
+              style: GoogleFonts.roboto(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              "Tap the camera to scan your lesion and start monitoring!",
+              style: GoogleFonts.roboto(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // Simple card widget with consistent styling.
+  /// A simple card widget with consistent styling.
   Widget _buildCard({required Widget child}) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -252,7 +246,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 }
 
-/// Custom widget for swipe-to-delete with limited drag.
+/// A custom widget to enable swipe-to-delete with limited drag.
 class SwipeToDelete extends StatefulWidget {
   final Widget child;
   final Future<void> Function() onDelete;
@@ -294,7 +288,7 @@ class _SwipeToDeleteState extends State<SwipeToDelete> with SingleTickerProvider
   Widget build(BuildContext context){
     return LayoutBuilder(
         builder: (context, constraints) {
-          double maxDrag = constraints.maxWidth * 0.15;
+          double maxDrag = constraints.maxWidth * 0.25; // 25% of width
           return GestureDetector(
             onHorizontalDragUpdate: (details){
               setState(() {
@@ -339,7 +333,7 @@ class _SwipeToDeleteState extends State<SwipeToDelete> with SingleTickerProvider
             },
             child: Stack(
               children: [
-                // The red square icon remains fixed in position while dragging
+                // The fixed trash icon square on the left
                 Positioned(
                   left: 0,
                   top: 0,

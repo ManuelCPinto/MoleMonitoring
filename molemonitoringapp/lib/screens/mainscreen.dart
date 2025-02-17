@@ -13,16 +13,40 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   static const Color accentBlue = Color(0xFF005EB8);
 
   late Future<Map<String, dynamic>?> _predictionFuture;
   bool _showInfo = false;
 
+  late AnimationController _slideController;
+  late Animation<Offset> _slideAnimation;
+
   @override
   void initState() {
     super.initState();
     _predictionFuture = _getLatestPrediction();
+    _slideController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOut,
+    ));
+    // Start slide animation after a brief delay.
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) _slideController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _slideController.dispose();
+    super.dispose();
   }
 
   Future<Map<String, dynamic>?> _getLatestPrediction() async {
@@ -33,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return null;
   }
 
-  /// Interprets a raw confidence percentage (e.g., "85%") into a descriptive phrase.
+  /// Converts a raw confidence string (e.g., "85%") into a descriptive phrase.
   String interpretConfidence(String confidenceStr) {
     final numeric = double.tryParse(confidenceStr.replaceAll('%', '')) ?? 0.0;
     if (numeric < 50) {
@@ -57,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Curved header (unchanged)
+            // Curved header at top.
             SizedBox(
               height: 160,
               child: Stack(
@@ -76,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
-                          shadows: [
+                          shadows: const [
                             Shadow(
                               color: Colors.black26,
                               blurRadius: 4,
@@ -90,8 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-
-            // Main content
+            // Main content.
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: FutureBuilder<Map<String, dynamic>?>(
@@ -126,9 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(
                               "Tap the camera to scan your lesion and start monitoring!",
                               style: GoogleFonts.roboto(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
+                                  fontSize: 14, color: Colors.grey[600]),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -157,34 +178,40 @@ class _HomeScreenState extends State<HomeScreen> {
                     };
                   }
 
-                  // Determine if the lesion is malignant
                   final bool isMalignant = ["akiec", "bcc", "mel"]
                       .contains(lastPrediction.toLowerCase());
 
                   return Column(
                     children: [
-                      // Latest Analysis Card with gauge in top-right
-                      _buildLatestAnalysisCard(lastPrediction, confidence, timestamp, isMalignant),
+                      // Latest Analysis Card with gauge & narrative, sliding upward.
+                      SlideTransition(
+                        position: _slideAnimation,
+                        child: _buildLatestAnalysisCard(
+                            lastPrediction, confidence, timestamp, isMalignant),
+                      ),
                       const SizedBox(height: 20),
-                      // Analysis Chart Card (unchanged)
-                      _buildCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Analysis Chart",
-                              style: GoogleFonts.roboto(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                      // Analysis Chart Card with sliding animation.
+                      SlideTransition(
+                        position: _slideAnimation,
+                        child: _buildCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Analysis Chart",
+                                style: GoogleFonts.roboto(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              height: 240,
-                              child: _buildVerticalBarChart(details, lastPrediction),
-                            ),
-                          ],
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                height: 240,
+                                child: _buildVerticalBarChart(details, lastPrediction),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -198,82 +225,130 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Latest Analysis Card with gauge in the top-right. The portion below
-  /// the timestamp can extend to the card's full width.
+  /// Latest Analysis Card with an animated circular gauge in the top-right.
   Widget _buildLatestAnalysisCard(String lastPrediction, String confidenceStr, String timestamp, bool isMalignant) {
     final double numericConfidence = double.tryParse(confidenceStr.replaceAll('%', '')) ?? 0.0;
     final String confidencePhrase = interpretConfidence(confidenceStr);
     final Color typeColor = isMalignant ? Colors.red : accentBlue;
 
     return _buildCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          // Stack for top lines: Title + Narrative + Gauge in top-right
-          Stack(
-            children: [
-              // Title + narrative portion (with right padding for gauge)
-              Padding(
-                padding: const EdgeInsets.only(right: 100),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Latest Analysis",
-                      style: GoogleFonts.roboto(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+          // Narrative content with extra right padding for the gauge.
+          Padding(
+            padding: const EdgeInsets.only(right: 100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Latest Analysis",
+                  style: GoogleFonts.roboto(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                RichText(
+                  text: TextSpan(
+                    style: GoogleFonts.roboto(fontSize: 16, color: Colors.black87),
+                    children: [
+                      const TextSpan(text: "Based on the last scan, the lesion appears to be "),
+                      TextSpan(
+                        text: lastPrediction.toUpperCase(),
+                        style: TextStyle(fontWeight: FontWeight.bold, color: typeColor),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Narrative text
-                    RichText(
-                      text: TextSpan(
-                        style: GoogleFonts.roboto(fontSize: 16, color: Colors.black87),
-                        children: [
-                          const TextSpan(text: "Based on the last scan, the lesion presents characteristics of "),
-                          TextSpan(
-                            text: lastPrediction.toUpperCase(),
-                            style: TextStyle(fontWeight: FontWeight.bold, color: typeColor),
-                          ),
-                          const TextSpan(text: " with a confidence of "),
-                          TextSpan(
-                            text: "${numericConfidence.toStringAsFixed(1)}%",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const TextSpan(text: " ("),
-                          TextSpan(
-                            text: confidencePhrase,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const TextSpan(text: ")."),
-                        ],
+                      const TextSpan(text: " – determined as "),
+                      TextSpan(
+                        text: confidencePhrase,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const TextSpan(text: " with a confidence of "),
+                      TextSpan(
+                        text: numericConfidence.toStringAsFixed(1),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const TextSpan(text: " percent."),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(Icons.access_time, size: 18, color: Colors.grey[700]),
+                    const SizedBox(width: 6),
+                    Text(
+                      timestamp,
+                      style: GoogleFonts.roboto(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
                       ),
                     ),
                   ],
                 ),
-              ),
-              // Circular gauge in top-right
-              Positioned(
-                top: 0,
-                right: 0,
-                child: SizedBox(
-                  width: 80,
-                  height: 80,
-                  child: Stack(
+                const SizedBox(height: 12),
+                Text(
+                  isMalignant
+                      ? "⚠️ This lesion may be malignant. This result is generated by AI; please consult a dermatologist immediately."
+                      : "✅ This lesion appears benign. This result is generated by AI; continue to monitor for any changes.",
+                  style: GoogleFonts.roboto(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isMalignant ? Colors.red : accentBlue,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildButton(
+                  text: _showInfo ? "Hide Info" : "Show More Info",
+                  onTap: () {
+                    setState(() {
+                      _showInfo = !_showInfo;
+                    });
+                  },
+                  backgroundColor: accentBlue,
+                  textColor: Colors.white,
+                ),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                  child: _showInfo
+                      ? Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      _mockInfoText(lastPrediction),
+                      style: GoogleFonts.roboto(fontSize: 14, color: Colors.black87),
+                    ),
+                  )
+                      : const SizedBox(),
+                ),
+              ],
+            ),
+          ),
+          // Animated circular gauge in the top-right using TweenAnimationBuilder.
+          Positioned(
+            top: 0,
+            right: 0,
+            child: SizedBox(
+              width: 80,
+              height: 80,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: numericConfidence),
+                duration: const Duration(milliseconds: 1200),
+                builder: (context, value, child) {
+                  return Stack(
                     alignment: Alignment.center,
                     children: [
                       CustomPaint(
                         size: const Size(80, 80),
                         painter: _CircularGaugePainter(
-                          percentage: numericConfidence,
+                          percentage: value,
                           trackColor: Colors.grey[300]!,
                           fillColor: accentBlue,
                         ),
                       ),
                       Text(
-                        "${numericConfidence.toStringAsFixed(1)}%",
+                        value.toStringAsFixed(1),
                         style: GoogleFonts.roboto(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -281,67 +356,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ],
-                  ),
-                ),
+                  );
+                },
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Everything below the stack uses full width
-          // Timestamp row
-          Row(
-            children: [
-              Icon(Icons.access_time, size: 18, color: Colors.grey[700]),
-              const SizedBox(width: 6),
-              Text(
-                timestamp,
-                style: GoogleFonts.roboto(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Advisory message
-          Text(
-            isMalignant
-                ? "⚠️ This lesion may be malignant. This result is generated by AI; please consult a dermatologist immediately."
-                : "✅ This lesion appears benign. This result is generated by AI; continue to monitor for any changes.",
-            style: GoogleFonts.roboto(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: isMalignant ? Colors.red : accentBlue,
             ),
-          ),
-          const SizedBox(height: 16),
-
-          // Show More Info button
-          _buildButton(
-            text: _showInfo ? "Hide Info" : "Show More Info",
-            onTap: () {
-              setState(() {
-                _showInfo = !_showInfo;
-              });
-            },
-            backgroundColor: accentBlue,
-            textColor: Colors.white,
-          ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOut,
-            child: _showInfo
-                ? Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                _mockInfoText(lastPrediction),
-                style: GoogleFonts.roboto(fontSize: 14, color: Colors.black87),
-              ),
-            )
-                : const SizedBox(),
           ),
         ],
       ),
@@ -387,72 +405,52 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Mock info text based on the prediction type.
   String _mockInfoText(String pred) {
     switch (pred.toLowerCase()) {
-
       case 'akiec':
         return """
-AKIEC (Actinic Keratoses / Intraepithelial Carcinoma) are rough, scaly patches caused by prolonged UV exposure. 
-They can potentially progress to squamous cell carcinoma if left untreated. 
-Early diagnosis and treatment—often via topical therapies, cryotherapy, or minor surgical procedures—can prevent further complications.
-Always consult a dermatologist for accurate assessment and management.
+AKIEC (Actinic Keratoses / Intraepithelial Carcinoma) are rough, scaly patches caused by prolonged UV exposure.
+They may progress to squamous cell carcinoma if left untreated. Early diagnosis and treatment are essential.
+Always consult a dermatologist for proper management.
 """;
-
       case 'bcc':
         return """
-BCC (Basal Cell Carcinoma) is a common form of skin cancer that typically appears as a pearly or waxy bump, 
-sometimes with visible blood vessels. It often arises in sun-exposed areas (face, ears, scalp). 
-Though it usually grows slowly, early treatment (surgical excision, topical therapies, or radiation) is essential to avoid local tissue damage.
-Consult a dermatologist if you notice persistent, non-healing lesions.
+BCC (Basal Cell Carcinoma) typically appears as a pearly or waxy bump with visible blood vessels.
+Although usually slow-growing, early treatment is crucial to prevent local tissue damage.
+Consult a dermatologist for evaluation.
 """;
-
       case 'bkl':
         return """
-BKL (Benign Keratosis, including seborrheic keratoses, solar lentigo, or lichen-planus-like keratosis) are non-cancerous growths. 
-They often have a “stuck-on” appearance, varying in color from light brown to black. 
-While generally harmless, changes in size, color, or texture should be evaluated by a dermatologist to rule out malignancy.
+BKL (Benign Keratosis) refers to non-cancerous skin growths with a 'stuck-on' appearance.
+They vary in color and texture; any changes should be evaluated by a dermatologist.
 """;
-
       case 'df':
         return """
-DF (Dermatofibroma) is a benign, firm nodule often found on the legs or arms. 
-They can appear pink, red, or brown, and might dimple inward when pinched. 
-Dermatofibromas usually do not require treatment unless they become symptomatic or cause cosmetic concerns.
-Any rapid changes or ulcerations should prompt medical evaluation.
+DF (Dermatofibroma) is a benign, firm nodule that often appears on the arms or legs.
+It is usually asymptomatic, but any changes should prompt medical evaluation.
 """;
-
       case 'mel':
         return """
-MEL (Melanoma) is a serious form of skin cancer originating in melanocytes (pigment-producing cells). 
-It may appear as a dark, irregularly shaped mole or a rapidly changing lesion. 
-Early detection is crucial—treatment often involves surgical removal and may include additional therapies if it has spread. 
-Watch for the ABCDEs (Asymmetry, Border irregularity, Color variation, Diameter >6mm, Evolving) and consult a dermatologist immediately if suspicious changes occur.
+MEL (Melanoma) is a serious form of skin cancer that may appear as an irregular, dark lesion.
+Early detection is critical—treatment typically involves surgical removal.
+Consult a dermatologist immediately if suspicious changes occur.
 """;
-
       case 'nv':
         return """
-NV (Melanocytic Nevus or “mole”) refers to a benign proliferation of melanocytes. 
-Most moles are harmless, but it’s important to monitor them for any changes in size, shape, or color. 
-If a mole exhibits rapid growth, irregular borders, or multiple colors, seek a dermatologist’s evaluation to rule out malignant transformation.
+NV (Melanocytic Nevus), commonly known as a mole, is usually benign.
+However, any rapid changes in size, shape, or color should prompt a dermatologist’s evaluation.
 """;
-
       case 'vasc':
         return """
-VASC (Vascular Lesion) encompasses hemangiomas, angiomas, and other blood vessel–related growths. 
-They can vary in color from red to purple and are usually benign. 
-While most vascular lesions are harmless, some may bleed or grow in size, warranting medical assessment. 
-Always consult a healthcare professional if you notice rapid changes or symptomatic lesions.
+VASC (Vascular Lesion) includes benign blood vessel–related growths.
+Although most are harmless, if a lesion bleeds or grows, seek medical advice.
 """;
-
       default:
         return """
-Monitor any mole or skin lesion for changes in size, shape, or color. 
-If you observe rapid evolution or have concerns, consult a qualified dermatologist for an accurate diagnosis and management plan.
+Monitor your skin for any changes in moles or lesions. If you observe rapid evolution or have concerns, consult a dermatologist for an accurate diagnosis.
 """;
     }
   }
 
-
-
-  /// Vertical bar chart using fl_chart (unchanged).
+  /// Vertical bar chart using fl_chart with a slower filling animation.
   Widget _buildVerticalBarChart(Map<String, dynamic> predictions, String lastPred) {
     final entries = predictions.entries.toList();
     final barGroups = <BarChartGroupData>[];
@@ -552,13 +550,13 @@ If you observe rapid evolution or have concerns, consult a qualified dermatologi
           ),
         ),
       ),
-      swapAnimationDuration: const Duration(milliseconds: 800),
+      swapAnimationDuration: const Duration(milliseconds: 1200),
       swapAnimationCurve: Curves.easeOutQuad,
     );
   }
 }
 
-/// A custom painter for drawing a circular (radial) gauge.
+/// Custom painter for the circular (radial) gauge.
 class _CircularGaugePainter extends CustomPainter {
   final double percentage; // e.g., 85.0 means 85%
   final Color trackColor;
@@ -576,7 +574,7 @@ class _CircularGaugePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
 
-    // Draw the track (background circle).
+    // Draw the track (background circle)
     final trackPaint = Paint()
       ..color = trackColor
       ..style = PaintingStyle.stroke
@@ -585,18 +583,16 @@ class _CircularGaugePainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, trackPaint);
 
-    // Draw the arc for the fill.
+    // Draw the arc for the fill
     final fillPaint = Paint()
       ..color = fillColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
-    // The angle for the arc is based on the percentage.
-    // 100% = 360 degrees (in radians = 2 * pi).
     final sweepAngle = (percentage / 100) * 2 * 3.141592653589793;
 
-    // Start angle is -90 degrees so arc starts from the top center.
+    // Start at -90 degrees so the arc starts at the top center.
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       -3.141592653589793 / 2,
@@ -623,7 +619,6 @@ class _CurvedHeaderPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = color;
     final path = Path();
-
     // Draw a rectangle with a curved bottom edge.
     path.moveTo(0, 0);
     path.lineTo(0, size.height - 50);
@@ -635,7 +630,6 @@ class _CurvedHeaderPainter extends CustomPainter {
     );
     path.lineTo(size.width, 0);
     path.close();
-
     canvas.drawPath(path, paint);
   }
 
