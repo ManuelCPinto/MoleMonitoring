@@ -27,7 +27,7 @@ class _CameraAppState extends State<CameraApp> {
   String? capturedImagePath;
 
   final String accessToken =
-      "ya29.a0AXeO80TZDZ_Tzwop-le-Iz38vSIio0a6dPHJ_ToFS6gRq_ZU7XhNZDHeuZ5n4uswjN5D8a3xx5s23wXgjoMfREJC3evTruEnFESWbmRvu861HmDIOq-udkx83tDLKVMjwlW-v89brNpXN6ASJP6gSui3gPBUZ6tjeSPFXS2pOsHT1BIaCgYKAYgSARMSFQHGX2MiBb4HhDsCPVXWMiw7mreaYA0182";
+      "ya29.a0AXeO80RkUkSooTMnpOV4VabS6uALofhUeXFQ2U5L03gvGIaDiloE33ofj1k-kunX7ftMDUnFYnMp-WVE-CKGKDpmN2Nqu3GDKg_dFlr1Ufq3r_ni9YqLIEIr8HNztHCjpyPaT71od5kWNTQpoUwQagHQ6kd7LOUIbDvCydc05IWDU80aCgYKAQgSARMSFQHGX2MicyODvuMX-tFHk1BcVplfvQ0182";
   final String parseURI =
       'https://europe-west3-aiplatform.googleapis.com/v1/projects/sic-molemonitoring/locations/europe-west3/endpoints/4241137405727342592:predict';
 
