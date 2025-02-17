@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '/utils/database_helper.dart';
@@ -31,14 +30,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
     });
   }
 
-  /// Show a confirmation dialog before deletion.
   Future<bool?> _confirmDeletion(BuildContext context, int recordId) async {
     return showDialog<bool>(
       context: context,
       builder: (BuildContext ctx) {
         return AlertDialog(
           title: const Text("Delete Record"),
-          content: const Text("Are you sure you want to permanently delete this result?"),
+          content: const Text(
+              "Are you sure you want to permanently delete this result?"),
           actions: [
             TextButton(
               child: const Text("Cancel"),
@@ -47,7 +46,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
             TextButton(
               child: const Text("Delete", style: TextStyle(color: Colors.red)),
               onPressed: () async {
-                // Make sure you have implemented deletePredictionById in your DatabaseHelper.
                 await DatabaseHelper().deletePredictionById(recordId);
                 Navigator.of(ctx).pop(true);
               },
@@ -62,7 +60,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // Curved header area at the top
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -75,7 +72,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       painter: _CurvedHeaderPainter(accentBlue),
                     ),
                   ),
-                  // Title in center
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 40),
@@ -96,7 +92,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       ),
                     ),
                   ),
-                  // Optional refresh icon in top-right
                   Positioned(
                     top: 40,
                     right: 20,
@@ -112,7 +107,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 ],
               ),
             ),
-            // Main content area
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: FutureBuilder<List<Map<String, dynamic>>>(
@@ -126,7 +120,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     return _buildCard(
                       child: Text(
                         'Error: ${snapshot.error}',
-                        style: GoogleFonts.roboto(fontSize: 16, color: Colors.red),
+                        style:
+                            GoogleFonts.roboto(fontSize: 16, color: Colors.red),
                       ),
                     );
                   } else if (snapshot.hasData) {
@@ -143,16 +138,19 @@ class _ResultsScreenState extends State<ResultsScreen> {
                           itemBuilder: (context, index) {
                             final prediction = predictions[index];
                             final int recordId = prediction['id'];
-                            final String timestamp = prediction['timestamp'] ?? 'No date';
+                            final String timestamp =
+                                prediction['timestamp'] ?? 'No date';
                             return SwipeToDelete(
                               onDelete: () async {
-                                await DatabaseHelper().deletePredictionById(recordId);
+                                await DatabaseHelper()
+                                    .deletePredictionById(recordId);
                                 _refreshPredictions();
                               },
                               child: _buildCard(
                                 child: ListTile(
                                   contentPadding: const EdgeInsets.all(12),
-                                  leading: const Icon(Icons.assignment_outlined, color: Color(0xFF005EB8)),
+                                  leading: const Icon(Icons.assignment_outlined,
+                                      color: Color(0xFF005EB8)),
                                   title: Text(
                                     prediction['prediction'] ?? 'No prediction',
                                     style: GoogleFonts.roboto(
@@ -163,17 +161,23 @@ class _ResultsScreenState extends State<ResultsScreen> {
                                   ),
                                   subtitle: Text(
                                     'Confidence: ${prediction['confidence'] ?? 'N/A'}\nTimestamp: $timestamp',
-                                    style: GoogleFonts.roboto(fontSize: 14, color: Colors.grey[700]),
+                                    style: GoogleFonts.roboto(
+                                        fontSize: 14, color: Colors.grey[700]),
                                   ),
-                                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                                  trailing: const Icon(Icons.arrow_forward_ios,
+                                      size: 16),
                                   onTap: () {
                                     Navigator.push(
                                       context,
                                       PageRouteBuilder(
-                                        pageBuilder: (context, animation, secondaryAnimation) =>
-                                            ResultDetailScreen(prediction: prediction),
-                                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                          return FadeTransition(opacity: animation, child: child);
+                                        pageBuilder: (context, animation,
+                                                secondaryAnimation) =>
+                                            ResultDetailScreen(
+                                                prediction: prediction),
+                                        transitionsBuilder: (context, animation,
+                                            secondaryAnimation, child) {
+                                          return FadeTransition(
+                                              opacity: animation, child: child);
                                         },
                                       ),
                                     );
@@ -197,7 +201,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
     );
   }
 
-  /// An inviting "No results" card.
   Widget _buildEmptyState() {
     return _buildCard(
       child: Center(
@@ -229,7 +232,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
     );
   }
 
-  /// A simple card widget with consistent styling.
   Widget _buildCard({required Widget child}) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -246,122 +248,122 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 }
 
-/// A custom widget to enable swipe-to-delete with limited drag.
 class SwipeToDelete extends StatefulWidget {
   final Widget child;
   final Future<void> Function() onDelete;
-  const SwipeToDelete({Key? key, required this.child, required this.onDelete}) : super(key: key);
+  const SwipeToDelete({Key? key, required this.child, required this.onDelete})
+      : super(key: key);
 
   @override
   _SwipeToDeleteState createState() => _SwipeToDeleteState();
 }
 
-class _SwipeToDeleteState extends State<SwipeToDelete> with SingleTickerProviderStateMixin {
+class _SwipeToDeleteState extends State<SwipeToDelete>
+    with SingleTickerProviderStateMixin {
   double _dragOffset = 0.0;
   late AnimationController _animationController;
   late Animation<double> _animation;
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
-    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
-    _animation = Tween<double>(begin: _dragOffset, end: 0).animate(_animationController)
-      ..addListener(() {
-        setState(() {
-          _dragOffset = _animation.value;
-        });
-      });
+    _animationController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 200));
+    _animation =
+        Tween<double>(begin: _dragOffset, end: 0).animate(_animationController)
+          ..addListener(() {
+            setState(() {
+              _dragOffset = _animation.value;
+            });
+          });
   }
 
   @override
-  void dispose(){
+  void dispose() {
     _animationController.dispose();
     super.dispose();
   }
 
   void _animateBack() {
-    _animation = Tween<double>(begin: _dragOffset, end: 0).animate(_animationController);
+    _animation =
+        Tween<double>(begin: _dragOffset, end: 0).animate(_animationController);
     _animationController.forward(from: 0);
   }
 
   @override
-  Widget build(BuildContext context){
-    return LayoutBuilder(
-        builder: (context, constraints) {
-          double maxDrag = constraints.maxWidth * 0.25; // 25% of width
-          return GestureDetector(
-            onHorizontalDragUpdate: (details){
-              setState(() {
-                _dragOffset += details.delta.dx;
-                // Clamp dragOffset between 0 and maxDrag
-                if (_dragOffset < 0) _dragOffset = 0;
-                if (_dragOffset > maxDrag) _dragOffset = maxDrag;
-              });
-            },
-            onHorizontalDragEnd: (details) async {
-              if (_dragOffset >= maxDrag) {
-                // Show confirmation dialog
-                bool? confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) {
-                    return AlertDialog(
-                      title: const Text("Delete Record"),
-                      content: const Text("Are you sure you want to permanently delete this result?"),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text("Cancel"),
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            Navigator.pop(context, true);
-                          },
-                          child: const Text("Delete", style: TextStyle(color: Colors.red)),
-                        ),
-                      ],
-                    );
-                  },
-                );
-                if (confirmed == true) {
-                  await widget.onDelete();
-                } else {
-                  _animateBack();
-                }
-              } else {
-                _animateBack();
-              }
-            },
-            child: Stack(
-              children: [
-                // The fixed trash icon square on the left
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    margin: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(8),
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      double maxDrag = constraints.maxWidth * 0.25;
+      return GestureDetector(
+        onHorizontalDragUpdate: (details) {
+          setState(() {
+            _dragOffset += details.delta.dx;
+            if (_dragOffset < 0) _dragOffset = 0;
+            if (_dragOffset > maxDrag) _dragOffset = maxDrag;
+          });
+        },
+        onHorizontalDragEnd: (details) async {
+          if (_dragOffset >= maxDrag) {
+            bool? confirmed = await showDialog<bool>(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("Delete Record"),
+                  content: const Text(
+                      "Are you sure you want to permanently delete this result?"),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text("Cancel"),
                     ),
-                    child: const Icon(Icons.delete, color: Colors.white),
-                  ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context, true);
+                      },
+                      child: const Text("Delete",
+                          style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                );
+              },
+            );
+            if (confirmed == true) {
+              await widget.onDelete();
+            } else {
+              _animateBack();
+            }
+          } else {
+            _animateBack();
+          }
+        },
+        child: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Container(
+                width: 48,
+                height: 48,
+                margin: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                Transform.translate(
-                  offset: Offset(_dragOffset, 0),
-                  child: widget.child,
-                ),
-              ],
+                child: const Icon(Icons.delete, color: Colors.white),
+              ),
             ),
-          );
-        }
-    );
+            Transform.translate(
+              offset: Offset(_dragOffset, 0),
+              child: widget.child,
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
-/// Custom painter for the curved header (unchanged).
 class _CurvedHeaderPainter extends CustomPainter {
   final Color color;
   _CurvedHeaderPainter(this.color);
@@ -370,7 +372,6 @@ class _CurvedHeaderPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = color;
     final path = Path();
-    // Draw a rectangle with a curved bottom edge.
     path.moveTo(0, 0);
     path.lineTo(0, size.height - 50);
     path.quadraticBezierTo(

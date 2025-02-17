@@ -10,11 +10,9 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // Use SingleChildScrollView in case content expands
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Curved header at the top (height = 160, same as main page)
             SizedBox(
               height: 160,
               child: Stack(
@@ -24,7 +22,6 @@ class ProfileScreen extends StatelessWidget {
                       painter: _CurvedHeaderPainter(accentBlue),
                     ),
                   ),
-                  // Title "Profile" in the center
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 50),
@@ -48,45 +45,43 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Stack to overlap the avatar on the header
             Stack(
               alignment: Alignment.topCenter,
               children: [
-                // Card with user details (less margin on top to reduce total height)
                 Container(
                   margin: const EdgeInsets.only(top: 40),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                   child: _buildCard(
                     child: Column(
                       children: [
-                        const SizedBox(height: 50), // Reserve space for avatar overlap
+                        const SizedBox(height: 50),
                         Text(
                           'User Test',
-                          style: GoogleFonts.roboto(fontSize: 22, fontWeight: FontWeight.bold),
+                          style: GoogleFonts.roboto(
+                              fontSize: 22, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'user@example.com',
-                          style: GoogleFonts.roboto(fontSize: 14, color: Colors.grey),
+                          style: GoogleFonts.roboto(
+                              fontSize: 14, color: Colors.grey),
                         ),
                         const SizedBox(height: 16),
-
-                        // Location / fun detail row
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.location_on, color: Colors.redAccent, size: 18),
+                            const Icon(Icons.location_on,
+                                color: Colors.redAccent, size: 18),
                             const SizedBox(width: 4),
                             Text(
                               "Lisboa, Portugal",
-                              style: GoogleFonts.roboto(fontSize: 14, color: Colors.grey[700]),
+                              style: GoogleFonts.roboto(
+                                  fontSize: 14, color: Colors.grey[700]),
                             ),
                           ],
                         ),
                         const SizedBox(height: 20),
-
-                        // Edit Profile Button
                         ElevatedButton.icon(
                           onPressed: () {
                             // TODO: Implement edit profile functionality
@@ -99,13 +94,13 @@ class ProfileScreen extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            textStyle: GoogleFonts.roboto(fontWeight: FontWeight.w600),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            textStyle:
+                                GoogleFonts.roboto(fontWeight: FontWeight.w600),
                           ),
                         ),
                         const SizedBox(height: 20),
-
-                        // Logout Button
                         OutlinedButton.icon(
                           onPressed: () {
                             // TODO: Implement logout functionality
@@ -120,16 +115,16 @@ class ProfileScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             side: const BorderSide(color: Colors.red),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            textStyle: GoogleFonts.roboto(fontWeight: FontWeight.w600),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                            textStyle:
+                                GoogleFonts.roboto(fontWeight: FontWeight.w600),
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-
-                // Circle avatar overlapping the card and header
                 Positioned(
                   top: 0,
                   child: CircleAvatar(
@@ -150,7 +145,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  /// A simple card widget with a light shadow
   Widget _buildCard({required Widget child}) {
     return Container(
       decoration: BoxDecoration(
@@ -168,7 +162,6 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-/// Same curved header painter as in your main page
 class _CurvedHeaderPainter extends CustomPainter {
   final Color color;
   _CurvedHeaderPainter(this.color);
@@ -178,7 +171,6 @@ class _CurvedHeaderPainter extends CustomPainter {
     final paint = Paint()..color = color;
     final path = Path();
 
-    // Draw a rectangle with a curved bottom edge
     path.moveTo(0, 0);
     path.lineTo(0, size.height - 50);
     path.quadraticBezierTo(

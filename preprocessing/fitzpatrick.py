@@ -30,7 +30,6 @@ with open(debug_log_path, "w") as log_file:
 misclassified_images = []
 
 def classify_fitzpatrick(hex_color):
-    """ Convert hex skin tone to Fitzpatrick scale based on RGB intensity. """
     if not hex_color:
         return "Unknown"
 

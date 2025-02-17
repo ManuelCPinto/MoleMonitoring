@@ -37,7 +37,6 @@ class DatabaseHelper {
             image_path TEXT
           )
         ''');
-
       },
     );
   }
@@ -48,14 +47,13 @@ class DatabaseHelper {
   }
 
   Future<int> deletePredictionById(int id) async {
-    final db = await database; // 'database' should be your opened Database instance
+    final db = await database;
     return await db.delete(
-      'predictions', // Replace with your actual table name
+      'predictions',
       where: 'id = ?',
       whereArgs: [id],
     );
   }
-
 
   Future<List<Map<String, dynamic>>> getPredictions() async {
     Database db = await database;

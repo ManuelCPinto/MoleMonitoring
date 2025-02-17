@@ -4,16 +4,16 @@ import 'package:molemonitoringapp/screens/camera_tab.dart';
 import 'package:molemonitoringapp/screens/mainscreen.dart';
 import 'package:molemonitoringapp/screens/resultsscreen.dart';
 import 'package:molemonitoringapp/screens/profilescreen.dart';
-import 'package:molemonitoringapp/utils/success_modal.dart'; // Your success modal function
+import 'package:molemonitoringapp/utils/success_modal.dart';
 
 class BottomNavScreen extends StatefulWidget {
   final int initialIndex;
   final bool showSuccessModal;
   const BottomNavScreen({
-    Key? key,
+    super.key,
     this.initialIndex = 0,
     this.showSuccessModal = false,
-  }) : super(key: key);
+  });
 
   @override
   State<BottomNavScreen> createState() => _BottomNavScreenState();
@@ -22,7 +22,6 @@ class BottomNavScreen extends StatefulWidget {
 class _BottomNavScreenState extends State<BottomNavScreen> {
   late int _currentIndex;
   final List<Widget> _pages = [];
-  bool _modalFinished = false;
 
   @override
   void initState() {
@@ -34,17 +33,10 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
       const ResultsScreen(),
       const ProfileScreen(),
     ]);
-    // If the flag is true, show the success modal and wait for it to close.
     if (widget.showSuccessModal) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await showSuccessModal(context);
-        // When modal is dismissed, mark as finished and rebuild.
-        setState(() {
-          _modalFinished = true;
-        });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showSuccessModal(context);
       });
-    } else {
-      _modalFinished = true;
     }
   }
 
@@ -78,13 +70,6 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Until the modal has finished, show a loading indicator.
-    if (!_modalFinished) {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
     return Scaffold(
       body: _pages[_currentIndex],
       bottomNavigationBar: Container(

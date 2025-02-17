@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ui'; // For ImageFilter
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -33,11 +32,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOut,
-    ));
-    // Start slide animation after a brief delay.
+    ).animate(
+      CurvedAnimation(
+        parent: _slideController,
+        curve: Curves.easeOut,
+      ),
+    );
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) _slideController.forward();
     });
@@ -57,7 +57,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return null;
   }
 
-  /// Converts a raw confidence string (e.g., "85%") into a descriptive phrase.
   String interpretConfidence(String confidenceStr) {
     final numeric = double.tryParse(confidenceStr.replaceAll('%', '')) ?? 0.0;
     if (numeric < 50) {
@@ -77,11 +76,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // Header remains unchanged.
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Curved header at top.
             SizedBox(
               height: 160,
               child: Stack(
@@ -114,7 +111,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ],
               ),
             ),
-            // Main content.
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: FutureBuilder<Map<String, dynamic>?>(
@@ -149,7 +145,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             Text(
                               "Tap the camera to scan your lesion and start monitoring!",
                               style: GoogleFonts.roboto(
-                                  fontSize: 14, color: Colors.grey[600]),
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -165,7 +163,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                   Map<String, dynamic> details;
                   try {
-                    details = Map<String, dynamic>.from(jsonDecode(data['details']));
+                    details = Map<String, dynamic>.from(
+                      jsonDecode(data['details']),
+                    );
                   } catch (e) {
                     details = {
                       "akiec": "<0.1%",
@@ -183,14 +183,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                   return Column(
                     children: [
-                      // Latest Analysis Card with gauge & narrative, sliding upward.
                       SlideTransition(
                         position: _slideAnimation,
                         child: _buildLatestAnalysisCard(
-                            lastPrediction, confidence, timestamp, isMalignant),
+                          lastPrediction,
+                          confidence,
+                          timestamp,
+                          isMalignant,
+                        ),
                       ),
                       const SizedBox(height: 20),
-                      // Analysis Chart Card with sliding animation.
                       SlideTransition(
                         position: _slideAnimation,
                         child: _buildCard(
@@ -208,7 +210,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               const SizedBox(height: 16),
                               SizedBox(
                                 height: 240,
-                                child: _buildVerticalBarChart(details, lastPrediction),
+                                child: _buildVerticalBarChart(
+                                  details,
+                                  lastPrediction,
+                                ),
                               ),
                             ],
                           ),
@@ -225,16 +230,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  /// Latest Analysis Card with an animated circular gauge in the top-right.
-  Widget _buildLatestAnalysisCard(String lastPrediction, String confidenceStr, String timestamp, bool isMalignant) {
-    final double numericConfidence = double.tryParse(confidenceStr.replaceAll('%', '')) ?? 0.0;
+  Widget _buildLatestAnalysisCard(
+    String lastPrediction,
+    String confidenceStr,
+    String timestamp,
+    bool isMalignant,
+  ) {
+    final double numericConfidence =
+        double.tryParse(confidenceStr.replaceAll('%', '')) ?? 0.0;
     final String confidencePhrase = interpretConfidence(confidenceStr);
     final Color typeColor = isMalignant ? Colors.red : accentBlue;
 
     return _buildCard(
       child: Stack(
         children: [
-          // Narrative content with extra right padding for the gauge.
           Padding(
             padding: const EdgeInsets.only(right: 100),
             child: Column(
@@ -251,12 +260,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 const SizedBox(height: 12),
                 RichText(
                   text: TextSpan(
-                    style: GoogleFonts.roboto(fontSize: 16, color: Colors.black87),
+                    style: GoogleFonts.roboto(
+                      fontSize: 16,
+                      color: Colors.black87,
+                    ),
                     children: [
-                      const TextSpan(text: "Based on the last scan, the lesion appears to be "),
+                      const TextSpan(
+                        text:
+                            "Based on the last scan, the lesion appears to be ",
+                      ),
                       TextSpan(
                         text: lastPrediction.toUpperCase(),
-                        style: TextStyle(fontWeight: FontWeight.bold, color: typeColor),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: typeColor,
+                        ),
                       ),
                       const TextSpan(text: " – determined as "),
                       TextSpan(
@@ -314,18 +332,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   curve: Curves.easeInOut,
                   child: _showInfo
                       ? Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      _mockInfoText(lastPrediction),
-                      style: GoogleFonts.roboto(fontSize: 14, color: Colors.black87),
-                    ),
-                  )
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            _mockInfoText(lastPrediction),
+                            style: GoogleFonts.roboto(
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        )
                       : const SizedBox(),
                 ),
               ],
             ),
           ),
-          // Animated circular gauge in the top-right using TweenAnimationBuilder.
           Positioned(
             top: 0,
             right: 0,
@@ -366,7 +386,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  /// Simple card widget with a light shadow.
   Widget _buildCard({required Widget child}) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
@@ -375,14 +394,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
         ],
       ),
       child: child,
     );
   }
 
-  /// Custom button style.
   Widget _buildButton({
     required String text,
     required VoidCallback onTap,
@@ -394,7 +416,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         backgroundColor: backgroundColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        textStyle: GoogleFonts.roboto(fontSize: 14, fontWeight: FontWeight.w600),
+        textStyle: GoogleFonts.roboto(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
         elevation: 2,
       ),
       onPressed: onTap,
@@ -402,7 +427,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  /// Mock info text based on the prediction type.
   String _mockInfoText(String pred) {
     switch (pred.toLowerCase()) {
       case 'akiec':
@@ -450,8 +474,8 @@ Monitor your skin for any changes in moles or lesions. If you observe rapid evol
     }
   }
 
-  /// Vertical bar chart using fl_chart with a slower filling animation.
-  Widget _buildVerticalBarChart(Map<String, dynamic> predictions, String lastPred) {
+  Widget _buildVerticalBarChart(
+      Map<String, dynamic> predictions, String lastPred) {
     final entries = predictions.entries.toList();
     final barGroups = <BarChartGroupData>[];
 
@@ -463,15 +487,15 @@ Monitor your skin for any changes in moles or lesions. If you observe rapid evol
       final bool isActive = entry.key.toLowerCase() == lastPred.toLowerCase();
       final gradient = isActive
           ? const LinearGradient(
-        colors: [Colors.blue, Colors.lightBlueAccent],
-        begin: Alignment.bottomCenter,
-        end: Alignment.topCenter,
-      )
+              colors: [Colors.blue, Colors.lightBlueAccent],
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+            )
           : const LinearGradient(
-        colors: [Colors.grey, Colors.grey],
-        begin: Alignment.bottomCenter,
-        end: Alignment.topCenter,
-      );
+              colors: [Colors.grey, Colors.grey],
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+            );
       barGroups.add(
         BarChartGroupData(
           x: i,
@@ -503,7 +527,8 @@ Monitor your skin for any changes in moles or lesions. If you observe rapid evol
               showTitles: true,
               reservedSize: 36,
               getTitlesWidget: (double value, TitleMeta meta) {
-                if (value < 0 || value >= entries.length) return const SizedBox();
+                if (value < 0 || value >= entries.length)
+                  return const SizedBox();
                 final String label = entries[value.toInt()].key.toUpperCase();
                 return Padding(
                   padding: const EdgeInsets.only(top: 6.0),
@@ -556,9 +581,8 @@ Monitor your skin for any changes in moles or lesions. If you observe rapid evol
   }
 }
 
-/// Custom painter for the circular (radial) gauge.
 class _CircularGaugePainter extends CustomPainter {
-  final double percentage; // e.g., 85.0 means 85%
+  final double percentage;
   final Color trackColor;
   final Color fillColor;
 
@@ -574,7 +598,6 @@ class _CircularGaugePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
 
-    // Draw the track (background circle)
     final trackPaint = Paint()
       ..color = trackColor
       ..style = PaintingStyle.stroke
@@ -583,7 +606,6 @@ class _CircularGaugePainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, trackPaint);
 
-    // Draw the arc for the fill
     final fillPaint = Paint()
       ..color = fillColor
       ..style = PaintingStyle.stroke
@@ -592,7 +614,6 @@ class _CircularGaugePainter extends CustomPainter {
 
     final sweepAngle = (percentage / 100) * 2 * 3.141592653589793;
 
-    // Start at -90 degrees so the arc starts at the top center.
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       -3.141592653589793 / 2,
@@ -610,7 +631,6 @@ class _CircularGaugePainter extends CustomPainter {
   }
 }
 
-/// Custom painter for the curved header (unchanged).
 class _CurvedHeaderPainter extends CustomPainter {
   final Color color;
   _CurvedHeaderPainter(this.color);
@@ -619,7 +639,6 @@ class _CurvedHeaderPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = color;
     final path = Path();
-    // Draw a rectangle with a curved bottom edge.
     path.moveTo(0, 0);
     path.lineTo(0, size.height - 50);
     path.quadraticBezierTo(

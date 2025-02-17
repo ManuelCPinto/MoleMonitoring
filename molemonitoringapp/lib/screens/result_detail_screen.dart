@@ -1,36 +1,41 @@
 import 'dart:convert';
-import 'dart:ui'; // For ImageFilter
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '/utils/database_helper.dart';
+import '../bottom_nav_screen.dart';
 
 class ResultDetailScreen extends StatelessWidget {
   final Map<String, dynamic> prediction;
-  const ResultDetailScreen({Key? key, required this.prediction}) : super(key: key);
+  const ResultDetailScreen({Key? key, required this.prediction})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final String lastPrediction = prediction['prediction'] ?? "Unknown";
     final String confidence = prediction['confidence'] ?? "N/A";
     final String timestamp = prediction['timestamp'] ?? "No timestamp";
-    final int? recordId = prediction['id']; // Make sure your prediction map includes an 'id'
+    final int? recordId = prediction['id'];
 
     Map<String, dynamic> detailedPredictions;
     try {
-      detailedPredictions = Map<String, dynamic>.from(jsonDecode(prediction['details']));
+      detailedPredictions =
+          Map<String, dynamic>.from(jsonDecode(prediction['details']));
     } catch (e) {
       detailedPredictions = {};
     }
 
-    final bool isMalignant = ["akiec", "bcc", "mel"].contains(lastPrediction.toLowerCase());
+    final bool isMalignant =
+        ["akiec", "bcc", "mel"].contains(lastPrediction.toLowerCase());
+
+    final double numericConfidence =
+        double.tryParse(confidence.replaceAll('%', '')) ?? 0.0;
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Curved header with go back and delete buttons
             SizedBox(
               height: 160,
               child: Stack(
@@ -40,7 +45,6 @@ class ResultDetailScreen extends StatelessWidget {
                       painter: _CurvedHeaderPainter(const Color(0xFF005EB8)),
                     ),
                   ),
-                  // Go back arrow (top-left)
                   Positioned(
                     top: 40,
                     left: 16,
@@ -49,16 +53,15 @@ class ResultDetailScreen extends StatelessWidget {
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
-                  // Delete button (top-right)
                   Positioned(
                     top: 40,
                     right: 16,
                     child: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.white),
-                      onPressed: () => _showDeleteConfirmation(context, recordId),
+                      onPressed: () =>
+                          _showDeleteConfirmation(context, recordId),
                     ),
                   ),
-                  // Title in center
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 40),
@@ -68,8 +71,8 @@ class ResultDetailScreen extends StatelessWidget {
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
-                          shadows: [
-                            const Shadow(
+                          shadows: const [
+                            Shadow(
                               color: Colors.black26,
                               blurRadius: 4,
                               offset: Offset(0, 2),
@@ -82,103 +85,53 @@ class ResultDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-            // Main content area
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Column(
                 children: [
-                  // Card with analysis details
-                  _buildCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Analysis Result",
-                          style: GoogleFonts.roboto(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        RichText(
-                          text: TextSpan(
-                            style: GoogleFonts.roboto(fontSize: 16, color: Colors.black87),
-                            children: [
-                              const TextSpan(text: "Based on the last scan, the lesion presents characteristics of "),
-                              TextSpan(
-                                text: lastPrediction.toUpperCase(),
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: isMalignant ? Colors.red : const Color(0xFF005EB8),
+                  numericConfidence < 50
+                      ? _buildInconclusiveCard(context)
+                      : Column(
+                          children: [
+                            _buildAnalysisCard(
+                              lastPrediction: lastPrediction,
+                              confidence: confidence,
+                              timestamp: timestamp,
+                              isMalignant: isMalignant,
+                            ),
+                            const SizedBox(height: 20),
+                            if (detailedPredictions.isNotEmpty)
+                              _buildCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Detailed Chart",
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    SizedBox(
+                                      height: 240,
+                                      child: _buildVerticalBarChart(
+                                        detailedPredictions,
+                                        lastPrediction,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const TextSpan(text: " with a confidence of "),
-                              TextSpan(
-                                text: confidence,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              const TextSpan(text: "."),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Icon(Icons.access_time, size: 18, color: Colors.grey[700]),
-                            const SizedBox(width: 6),
-                            Text(
-                              timestamp,
-                              style: GoogleFonts.roboto(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          isMalignant
-                              ? "⚠️ This lesion may be malignant. This result is generated by AI; please consult a dermatologist immediately."
-                              : "✅ This lesion appears benign. This result is generated by AI; continue to monitor for any changes.",
-                          style: GoogleFonts.roboto(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: isMalignant ? Colors.red : const Color(0xFF005EB8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Analysis Chart Card
-                  if (detailedPredictions.isNotEmpty)
-                    _buildCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Detailed Chart",
-                            style: GoogleFonts.roboto(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            height: 240,
-                            child: _buildVerticalBarChart(detailedPredictions, lastPrediction),
-                          ),
-                        ],
-                      ),
-                    ),
                   const SizedBox(height: 20),
                   _buildCard(
                     child: Text(
                       "If you notice changes or have concerns, please consult a healthcare professional.",
-                      style: GoogleFonts.roboto(fontSize: 16, color: Colors.black87),
+                      style: GoogleFonts.roboto(
+                          fontSize: 16, color: Colors.black87),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -191,7 +144,6 @@ class ResultDetailScreen extends StatelessWidget {
     );
   }
 
-  /// Shows a confirmation dialog before deletion.
   void _showDeleteConfirmation(BuildContext context, int? recordId) {
     if (recordId == null) return;
     showDialog(
@@ -199,7 +151,8 @@ class ResultDetailScreen extends StatelessWidget {
       builder: (BuildContext ctx) {
         return AlertDialog(
           title: const Text("Delete Record"),
-          content: const Text("Are you sure you want to permanently delete this result?"),
+          content: const Text(
+              "Are you sure you want to permanently delete this result?"),
           actions: [
             TextButton(
               child: const Text("Cancel"),
@@ -208,7 +161,6 @@ class ResultDetailScreen extends StatelessWidget {
             TextButton(
               child: const Text("Delete", style: TextStyle(color: Colors.red)),
               onPressed: () async {
-                // Make sure to add the method `deletePredictionById` to your DatabaseHelper.
                 await DatabaseHelper().deletePredictionById(recordId);
                 Navigator.pop(ctx);
                 Navigator.pop(context);
@@ -220,7 +172,125 @@ class ResultDetailScreen extends StatelessWidget {
     );
   }
 
-  /// Simple card widget with a light shadow.
+  Widget _buildInconclusiveCard(BuildContext context) {
+    return _buildCard(
+      child: Column(
+        children: [
+          Text(
+            "Scan Inconclusive",
+            style: GoogleFonts.roboto(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            "This scan did not produce a conclusive result.\n"
+            "Please retake your scan for a clearer analysis.",
+            style: GoogleFonts.roboto(fontSize: 16, color: Colors.black54),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (ctx) => const BottomNavScreen(
+                      initialIndex: 1, showSuccessModal: false),
+                ),
+              );
+            },
+            icon: const Icon(Icons.camera_alt),
+            label: const Text("Retake Scan"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF005EB8),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalysisCard({
+    required String lastPrediction,
+    required String confidence,
+    required String timestamp,
+    required bool isMalignant,
+  }) {
+    return _buildCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Analysis Result",
+            style: GoogleFonts.roboto(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+          RichText(
+            text: TextSpan(
+              style: GoogleFonts.roboto(fontSize: 16, color: Colors.black87),
+              children: [
+                const TextSpan(
+                  text:
+                      "Based on the last scan, the lesion presents characteristics of ",
+                ),
+                TextSpan(
+                  text: lastPrediction.toUpperCase(),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isMalignant ? Colors.red : const Color(0xFF005EB8),
+                  ),
+                ),
+                const TextSpan(text: " with a confidence of "),
+                TextSpan(
+                  text: confidence,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const TextSpan(text: "."),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.access_time, size: 18, color: Colors.grey[700]),
+              const SizedBox(width: 6),
+              Text(
+                timestamp,
+                style: GoogleFonts.roboto(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            isMalignant
+                ? "⚠️ This lesion may be malignant. This result is generated by AI; please consult a dermatologist immediately."
+                : "✅ This lesion appears benign. This result is generated by AI; continue to monitor for any changes.",
+            style: GoogleFonts.roboto(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: isMalignant ? Colors.red : const Color(0xFF005EB8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCard({required Widget child}) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
@@ -236,8 +306,8 @@ class ResultDetailScreen extends StatelessWidget {
     );
   }
 
-  /// Vertical bar chart using fl_chart.
-  Widget _buildVerticalBarChart(Map<String, dynamic> predictions, String lastPred) {
+  Widget _buildVerticalBarChart(
+      Map<String, dynamic> predictions, String lastPred) {
     final entries = predictions.entries.toList();
     final barGroups = <BarChartGroupData>[];
 
@@ -249,15 +319,15 @@ class ResultDetailScreen extends StatelessWidget {
       final bool isActive = entry.key.toLowerCase() == lastPred.toLowerCase();
       final gradient = isActive
           ? const LinearGradient(
-        colors: [Colors.blue, Colors.lightBlueAccent],
-        begin: Alignment.bottomCenter,
-        end: Alignment.topCenter,
-      )
+              colors: [Colors.blue, Colors.lightBlueAccent],
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+            )
           : const LinearGradient(
-        colors: [Colors.grey, Colors.grey],
-        begin: Alignment.bottomCenter,
-        end: Alignment.topCenter,
-      );
+              colors: [Colors.grey, Colors.grey],
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+            );
       barGroups.add(
         BarChartGroupData(
           x: i,
@@ -289,7 +359,8 @@ class ResultDetailScreen extends StatelessWidget {
               showTitles: true,
               reservedSize: 36,
               getTitlesWidget: (double value, TitleMeta meta) {
-                if (value < 0 || value >= entries.length) return const SizedBox();
+                if (value < 0 || value >= entries.length)
+                  return const SizedBox();
                 final String label = entries[value.toInt()].key.toUpperCase();
                 return Padding(
                   padding: const EdgeInsets.only(top: 6.0),
@@ -342,9 +413,8 @@ class ResultDetailScreen extends StatelessWidget {
   }
 }
 
-/// A custom painter for drawing a circular (radial) gauge.
 class _CircularGaugePainter extends CustomPainter {
-  final double percentage; // e.g., 85.0 means 85%
+  final double percentage;
   final Color trackColor;
   final Color fillColor;
 
@@ -360,7 +430,6 @@ class _CircularGaugePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
 
-    // Draw the track (background circle).
     final trackPaint = Paint()
       ..color = trackColor
       ..style = PaintingStyle.stroke
@@ -369,17 +438,14 @@ class _CircularGaugePainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, trackPaint);
 
-    // Draw the arc for the fill.
     final fillPaint = Paint()
       ..color = fillColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
-    // Calculate the sweep angle (2*pi for 100%).
     final sweepAngle = (percentage / 100) * 2 * 3.141592653589793;
 
-    // Start at -90° (top center)
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       -3.141592653589793 / 2,
@@ -397,7 +463,6 @@ class _CircularGaugePainter extends CustomPainter {
   }
 }
 
-/// Custom painter for the curved header (unchanged).
 class _CurvedHeaderPainter extends CustomPainter {
   final Color color;
   _CurvedHeaderPainter(this.color);
@@ -407,7 +472,6 @@ class _CurvedHeaderPainter extends CustomPainter {
     final paint = Paint()..color = color;
     final path = Path();
 
-    // Draw a rectangle with a curved bottom edge.
     path.moveTo(0, 0);
     path.lineTo(0, size.height - 50);
     path.quadraticBezierTo(

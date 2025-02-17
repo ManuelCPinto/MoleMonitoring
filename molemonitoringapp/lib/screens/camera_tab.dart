@@ -33,11 +33,12 @@ class _CameraTabState extends State<CameraTab> {
           return Scaffold(
             appBar: AppBar(title: const Text('Camera')),
             body: Center(
-              child: Text('Error: ${snapshot.error}', style: GoogleFonts.lato()),
+              child:
+                  Text('Error: ${snapshot.error}', style: GoogleFonts.lato()),
             ),
           );
         } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-          return CameraApp(camera: snapshot.data![0]); // ✅ Directly show camera
+          return CameraApp(camera: snapshot.data![0]);
         } else {
           return Scaffold(
             appBar: AppBar(title: const Text('Camera')),

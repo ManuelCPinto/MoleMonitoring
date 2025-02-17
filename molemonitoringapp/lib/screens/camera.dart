@@ -5,13 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
 import 'package:molemonitoringapp/utils/storage_helper.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../bottom_nav_screen.dart';
 import '../utils/database_helper.dart';
-import 'package:molemonitoringapp/screens/mainscreen.dart';
-
 import '../utils/success_modal.dart';
 
 class CameraApp extends StatefulWidget {
@@ -30,9 +26,10 @@ class _CameraAppState extends State<CameraApp> {
   bool isPreview = false;
   String? capturedImagePath;
 
-  // Dados do teu endpoint
-  final String accessToken = "ya29.a0AXeO80QFMP9O_toxLDS4xeb_jPuijAOolQefgwyUCQbQyO0syXR7Ujy1ZlAtazBR7uvd9CTVGCO4eWq1S99FkQhmTWVix1VKkuuzBZ0Ts6tyR3Sv6Dz0S5mbI22OmltV0r3ItYZwUq5qJfzIqycpuyucSIhjakLuJkm2q3deGyYpgPYaCgYKAe0SARMSFQHGX2MinOkjYOVUFVzMndVypYkaqQ0182";
-  final String parseURI = 'https://europe-west3-aiplatform.googleapis.com/v1/projects/sic-molemonitoring/locations/europe-west3/endpoints/4241137405727342592:predict';
+  final String accessToken =
+      "ya29.a0AXeO80TZDZ_Tzwop-le-Iz38vSIio0a6dPHJ_ToFS6gRq_ZU7XhNZDHeuZ5n4uswjN5D8a3xx5s23wXgjoMfREJC3evTruEnFESWbmRvu861HmDIOq-udkx83tDLKVMjwlW-v89brNpXN6ASJP6gSui3gPBUZ6tjeSPFXS2pOsHT1BIaCgYKAYgSARMSFQHGX2MiBb4HhDsCPVXWMiw7mreaYA0182";
+  final String parseURI =
+      'https://europe-west3-aiplatform.googleapis.com/v1/projects/sic-molemonitoring/locations/europe-west3/endpoints/4241137405727342592:predict';
 
   @override
   void initState() {
@@ -51,7 +48,6 @@ class _CameraAppState extends State<CameraApp> {
     super.dispose();
   }
 
-  /// Tirar foto => modo pré-visualização
   Future<void> _takePicture() async {
     try {
       await _initializeControllerFuture;
@@ -66,7 +62,6 @@ class _CameraAppState extends State<CameraApp> {
     }
   }
 
-  /// Escolher da galeria => modo pré-visualização
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -77,7 +72,6 @@ class _CameraAppState extends State<CameraApp> {
     }
   }
 
-  /// Envio ao endpoint
   Future<void> sendPredictionRequest(String imagePath) async {
     final uri = Uri.parse(parseURI);
     final originalBytes = await File(imagePath).readAsBytes();
@@ -118,18 +112,16 @@ class _CameraAppState extends State<CameraApp> {
       final result = json.decode(response.body);
       print('Prediction result: $result');
 
-      // Processa os dados da predição...
       final predictionData = result['predictions'][0];
       final String prediction = predictionData['prediction'];
       final String confidence = predictionData['confidence'];
       final String timestamp = predictionData['timestamp'];
       final String processingTime = predictionData['processing_time'];
-      final Map<String, dynamic> detailedPredictions = predictionData['detailed_predictions'];
+      final Map<String, dynamic> detailedPredictions =
+          predictionData['detailed_predictions'];
 
-      // Salva a imagem localmente.
       final savedImagePath = await StorageHelper.saveImage(File(imagePath));
 
-      // Cria o registro de predição.
       final predictionRecord = {
         'prediction': prediction,
         'confidence': confidence,
@@ -139,22 +131,16 @@ class _CameraAppState extends State<CameraApp> {
         'image_path': savedImagePath,
       };
 
-      // Insere o registro na base de dados.
       await DatabaseHelper().insertPrediction(predictionRecord);
 
       print('Saved prediction: $predictionRecord');
 
-      // Redireciona para o BottomNavScreen (por exemplo, com índice 0 para a HomeScreen)
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => HomeScreen(
-            key: UniqueKey(), // forces a rebuild
-            onTabTapped: (index) {},
-          ),
-        ),
+            builder: (context) =>
+                const BottomNavScreen(initialIndex: 0, showSuccessModal: true)),
       );
-
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showSuccessModal(context);
@@ -166,16 +152,12 @@ class _CameraAppState extends State<CameraApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Se isPreview => mostra imagem + botões "Process"/"Redo"
-    // Senão => mostra câmara + botões "tirar foto"/"galeria"
     return isPreview ? _buildPreview() : _buildCamera();
   }
 
-  /// Ecrã de câmara: fullscreen + botões "tirar foto" e "galeria"
   Widget _buildCamera() {
     return Stack(
       children: [
-        // Câmera
         Positioned.fill(
           child: FutureBuilder<void>(
             future: _initializeControllerFuture,
@@ -190,7 +172,6 @@ class _CameraAppState extends State<CameraApp> {
             },
           ),
         ),
-        // Botões sobrepostos
         Positioned(
           bottom: 40,
           left: 0,
@@ -198,7 +179,6 @@ class _CameraAppState extends State<CameraApp> {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Botão grande circular para tirar foto
               GestureDetector(
                 onTap: _takePicture,
                 child: Container(
@@ -210,7 +190,6 @@ class _CameraAppState extends State<CameraApp> {
                   ),
                 ),
               ),
-              // Botão pequeno (galeria)
               Positioned(
                 right: 80,
                 child: GestureDetector(
@@ -237,25 +216,22 @@ class _CameraAppState extends State<CameraApp> {
     );
   }
 
-  /// Ecrã de pré-visualização: Imagem + botões "Process" e "Redo"
   Widget _buildPreview() {
     return Stack(
       children: [
-        // Imagem em fullscreen (cover)
         Positioned.fill(
           child: (capturedImagePath == null)
               ? const Center(
-            child: Text(
-              "Nenhuma imagem capturada",
-              style: TextStyle(color: Colors.white),
-            ),
-          )
+                  child: Text(
+                    "Nenhuma imagem capturada",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                )
               : Image.file(
-            File(capturedImagePath!),
-            fit: BoxFit.cover,
-          ),
+                  File(capturedImagePath!),
+                  fit: BoxFit.cover,
+                ),
         ),
-        // Botões sobrepostos
         Positioned(
           bottom: 40,
           left: 0,
@@ -263,7 +239,6 @@ class _CameraAppState extends State<CameraApp> {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Botão grande (Process)
               GestureDetector(
                 onTap: () {
                   if (capturedImagePath != null) {
@@ -275,7 +250,7 @@ class _CameraAppState extends State<CameraApp> {
                   height: 80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(0xFF005EB8),  // Fundo azul do botão grande
+                    color: Color(0xFF005EB8),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black26,
@@ -287,13 +262,12 @@ class _CameraAppState extends State<CameraApp> {
                   child: const Center(
                     child: Icon(
                       Icons.check,
-                      color: Colors.white, // ícone branco p/ contraste
+                      color: Colors.white,
                       size: 32,
                     ),
                   ),
                 ),
               ),
-              // Botão pequeno (Redo)
               Positioned(
                 right: 80,
                 child: GestureDetector(
@@ -308,12 +282,12 @@ class _CameraAppState extends State<CameraApp> {
                     height: 50,
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFF005EB8),  // Fundo azul do botão pequeno
+                      color: Color(0xFF005EB8),
                     ),
                     child: const Center(
                       child: Icon(
                         Icons.refresh,
-                        color: Colors.white, // ícone branco
+                        color: Colors.white,
                         size: 24,
                       ),
                     ),
