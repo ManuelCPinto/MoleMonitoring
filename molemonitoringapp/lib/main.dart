@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'splash_screen.dart';
 import 'bottom_nav_screen.dart';
 
 void main() {
@@ -13,20 +14,25 @@ class MoleMonitoringApp extends StatelessWidget {
     return MaterialApp(
       title: 'Mole Monitor',
       theme: ThemeData(
-        primaryColor: Color(0xFF00BCD4),
-        appBarTheme: AppBarTheme(
+        primaryColor: const Color(0xFF00BCD4),
+        appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF121212),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFF00BCD4),
+            backgroundColor: const Color(0xFF00BCD4),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
       ),
-      home: const BottomNavScreen(),
+      initialRoute: '/splash',
+      routes: {
+        '/splash': (context) => const SplashScreen(),
+        '/home': (context) => const BottomNavScreen(initialIndex: 0),
+      },
+      debugShowCheckedModeBanner: false,
     );
   }
 }
