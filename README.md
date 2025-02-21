@@ -106,7 +106,7 @@ MoleMonitoring/
 │   ├── baseline.py
 │   ├── cnn_with_weights.py
 │   ├── efficientnet-resnet-vit-svm.ipynb
-│   ├── inv2-sa.ipynb
+│   ├── irv2-sa.ipynb
 │   ├── resnet50.py
 ├── molemonitoringapp/
 ├── pictures/
