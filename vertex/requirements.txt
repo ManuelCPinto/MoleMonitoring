@@ -1,0 +1,7 @@
+flask
+torch
+timm
+albumentations
+pillow
+numpy
+gunicorn

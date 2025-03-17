@@ -11,11 +11,12 @@ import pandas as pd
 from PIL import Image
 
 BASE_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "HAM10000"))
+BASE_TEST_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "ISIC2018"))
 IMAGES_FOLDER = os.path.join(BASE_FOLDER, "HAM10000_images_processed", "rgb")
 METADATA_FILE = os.path.join(BASE_FOLDER, "HAM10000_metadata")
 
-TEST_FOLDER = os.path.join(BASE_FOLDER, "ISIC2018_Images_processed", "rgb")
-TEST_METADATA = os.path.join(BASE_FOLDER, "ISIC2018_TestSet", "ISIC2018_metadata")
+TEST_FOLDER = os.path.join(BASE_TEST_FOLDER, "ISIC2018_images_processed", "rgb")
+TEST_METADATA = os.path.join(BASE_TEST_FOLDER, "ISIC2018_metadata")
 
 NUM_SAMPLES = 10000
 TRAIN_SPLIT = 0.8  
@@ -147,7 +148,6 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, epochs=10
         
         print(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss/len(train_loader.dataset):.4f}, Train Acc: {train_acc:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
     
-    # Plot training and validation loss
     plt.figure(figsize=(12, 5))
     plt.subplot(1, 2, 1)
     plt.plot(range(1, epochs+1), train_losses, label='Train Loss')
@@ -157,7 +157,6 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, epochs=10
     plt.title('Loss Evolution')
     plt.legend()
     
-    # Plot training and validation accuracy
     plt.subplot(1, 2, 2)
     plt.plot(range(1, epochs+1), train_accuracies, label='Train Accuracy')
     plt.plot(range(1, epochs+1), val_accuracies, label='Validation Accuracy')

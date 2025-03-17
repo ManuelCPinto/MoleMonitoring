@@ -3,8 +3,7 @@ import pandas as pd
 
 root_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "..")) 
 metadata_file = os.path.join(root_folder, "HAM10000", "HAM10000_metadata")
-
-test_metadata_file =  os.path.join(root_folder, "HAM10000", "ISIC2018_TestSet", "ISIC2018_metadata")
+test_metadata_file =  os.path.join(root_folder, "ISIC2018", "ISIC2018_metadata")
 
 benign_classes = ["bkl", "df", "nv", "vasc"] 
 malignant_classes = ["akiec", "bcc", "mel"]  
